@@ -47,13 +47,13 @@ Route::middleware(['auth', 'active.user', 'role:super_admin|admin'])->group(func
 });
 
 // ══════════════════════════════════════════════════════════════════════
-// IMPORT CSV — Bagian 1 doang (upload -> tabel staging).
-// Master Engine (join ke tracker) menyusul bareng modul Tracker.
+// IMPORT CSV — upload ke staging + Master Business Engine (join ke tracker).
 // ══════════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'active.user'])->group(function () {
     Route::get('/import',          [ImportController::class, 'index'])->name('import.index');
     Route::post('/import/verify',  [ImportController::class, 'verify'])->name('import.verify');
     Route::post('/import/stream',  [ImportController::class, 'uploadAndStream'])->name('import.stream');
+    Route::post('/import/process', [ImportController::class, 'process'])->name('import.process');
 });
 
 // Redirect root ke login/users
