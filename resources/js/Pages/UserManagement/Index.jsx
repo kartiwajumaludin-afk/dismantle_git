@@ -7,7 +7,7 @@ export default function Index() {
         <div style={S.page}>
             <div style={S.header}>
                 <h1 style={S.title}>User Management</h1>
-                <p style={S.subtitle}>Kelola akses user ke WebApp dan MobApp</p>
+                <p style={S.subtitle}>Kelola akses user ke Web dan Field Team (MobApp)</p>
             </div>
 
             <div style={S.tabBar}>
@@ -15,13 +15,13 @@ export default function Index() {
                     style={{ ...S.tab, ...(tab === 'web' ? S.tabActive : {}) }}
                     onClick={() => setTab('web')}
                 >
-                    <i className="fas fa-desktop" /> User WebApp
+                    <i className="fas fa-desktop" /> Web
                 </button>
                 <button
                     style={{ ...S.tab, ...(tab === 'mobapp' ? S.tabActive : {}) }}
                     onClick={() => setTab('mobapp')}
                 >
-                    <i className="fas fa-mobile-screen-button" /> User MobApp
+                    <i className="fas fa-mobile-screen-button" /> Field Team (Mobile App)
                 </button>
             </div>
 
@@ -29,13 +29,13 @@ export default function Index() {
                 {tab === 'web' && (
                     <EmptyState
                         icon="fa-desktop"
-                        text="Belum ada data User WebApp"
+                        text="Belum ada data user dengan akses Web"
                     />
                 )}
                 {tab === 'mobapp' && (
                     <EmptyState
                         icon="fa-mobile-screen-button"
-                        text="Belum ada data User MobApp"
+                        text="Belum ada data user dengan akses Field Team (Mobile App)"
                     />
                 )}
             </div>
