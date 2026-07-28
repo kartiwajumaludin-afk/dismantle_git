@@ -8,6 +8,10 @@ import { usePage, router } from '@inertiajs/react';
 // Sub modul yang belum punya halaman/route beneran diarahkan ke halaman
 // Placeholder ("Under Development") — bukan tab mati — dicek pakai
 // route().has().
+//
+// PENTING: menu.icon / sub.icon di database SUDAH termasuk prefix "fa-"
+// (contoh: "fa-bell"), jadi classname-nya cuma `fas ${menu.icon}` —
+// JANGAN ditambah "fa-" lagi (itu bug yang bikin icon kosong kemarin).
 const LEFT_PANEL_WIDTH = 350;
 
 export default function AppLayout({ children, leftPanel, activeSubmenu }) {
@@ -70,7 +74,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                                     ...S.iconBox,
                                     ...(isActive ? S.iconBoxActive : isHovered ? S.iconBoxHover : {}),
                                 }}>
-                                    <i className={`fas fa-${menu.icon}`} />
+                                    <i className={`fas ${menu.icon}`} />
                                 </div>
                                 {isHovered && <span style={S.iconLabel}>{menu.label}</span>}
                             </div>
@@ -128,7 +132,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                                             color: active ? '#e6edf3' : '#8b949e',
                                         }}
                                     >
-                                        <i className={`fas fa-${sub.icon}`} style={{ color: sub.color || '#00b4d8' }} />
+                                        <i className={`fas ${sub.icon}`} style={{ color: sub.color || '#00b4d8' }} />
                                         <span>{sub.label}</span>
                                         {!built && <span style={S.soonBadge}>Segera</span>}
                                     </button>
