@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             RegionSeeder::class,
             MenuSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }
