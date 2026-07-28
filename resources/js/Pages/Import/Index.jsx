@@ -270,6 +270,15 @@ export default function ImportIndex({ stats }) {
     return (
         <AppLayout activeKey="import">
             <div style={S.wrap}>
+                <div style={S.statsBar}>
+                    {STATS_CONFIG.map((s) => (
+                        <div key={s.key} style={S.statChip}>
+                            <span style={{ ...S.statValue, color: s.color }}>{(stats?.[s.key] ?? 0).toLocaleString()}</span>
+                            <span style={S.statLabel}>{s.label}</span>
+                        </div>
+                    ))}
+                </div>
+
                 <div style={S.header}>
                     <h2 style={S.title}>
                         <i className="fas fa-file-import" style={{ color: '#00b4d8', marginRight: '10px' }} />
@@ -292,15 +301,6 @@ export default function ImportIndex({ stats }) {
                             onImport={onImport}
                             onReset={onReset}
                         />
-                    ))}
-                </div>
-
-                <div style={S.statsBar}>
-                    {STATS_CONFIG.map((s) => (
-                        <div key={s.key} style={S.statBox}>
-                            <div style={{ ...S.statValue, color: s.color }}>{(stats?.[s.key] ?? 0).toLocaleString()}</div>
-                            <div style={S.statLabel}>{s.label}</div>
-                        </div>
                     ))}
                 </div>
             </div>
@@ -439,11 +439,11 @@ const S = {
         color: '#8b949e', fontSize: '.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center',
         justifyContent: 'center', gap: '6px',
     },
-    statsBar: { display: 'flex', gap: '14px', flexWrap: 'wrap' },
-    statBox: {
-        background: '#212631', border: '1px solid #2a3140', borderRadius: '10px',
-        padding: '14px 20px', minWidth: '140px', textAlign: 'center',
+    statsBar: { display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' },
+    statChip: {
+        background: '#212631', border: '1px solid #2a3140', borderRadius: '8px',
+        padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px',
     },
-    statValue: { fontSize: '1.4rem', fontWeight: 800 },
-    statLabel: { fontSize: '.72rem', color: '#8b949e', marginTop: '4px' },
+    statValue: { fontSize: '1rem', fontWeight: 800 },
+    statLabel: { fontSize: '.72rem', color: '#8b949e' },
 };
