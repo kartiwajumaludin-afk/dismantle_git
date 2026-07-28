@@ -31,7 +31,7 @@ body {
     min-height: 100vh;
 }
 
-select, input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="search"] {
+select, input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="search"], input[type="tel"] {
     background-color: rgba(255, 255, 255, 0.04) !important;
     color: #e6edf3 !important;
     border: 1px solid #2a3140 !important;
@@ -51,6 +51,14 @@ input::placeholder { color: #6e7681 !important; }
 ::-webkit-scrollbar-track { background: #141821; }
 ::-webkit-scrollbar-thumb { background: #00b4d8; border-radius: 4px; }
 
+/* ── Scrollbar left panel (lebih besar, sesuai UI Approve) ── */
+.left-panel-scroll::-webkit-scrollbar { width: 10px; }
+.left-panel-scroll::-webkit-scrollbar-track { background: #141821; }
+.left-panel-scroll::-webkit-scrollbar-thumb {
+    background: #3a4255; border-radius: 6px; border: 2px solid #141821;
+}
+.left-panel-scroll::-webkit-scrollbar-thumb:hover { background: #00b4d8; }
+
 /* ── RGB animasi — dipakai di sidebar (vertikal) dan bar submenu (horizontal),
    wajib ada di semua modul sesuai UI Approve ── */
 @keyframes rgbLineMoveVertical {
@@ -67,6 +75,10 @@ input::placeholder { color: #6e7681 !important; }
     66%  { color: #0000ff; }
     100% { color: #ff0000; }
 }
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .sidebar-rgb-line {
     position: absolute; top: 0; right: 0; width: 3px; height: 100%;
@@ -81,3 +93,4 @@ input::placeholder { color: #6e7681 !important; }
     animation: rgbLineMove 4s ease-in-out infinite;
 }
 .rgb-text { animation: rgbCycle 3s infinite linear; font-weight: 600; }
+.animate-slide-in { animation: slideIn 0.2s ease forwards; }
