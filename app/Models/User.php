@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable([
@@ -75,5 +76,53 @@ class User extends Authenticatable
     public function submenus()
     {
         return $this->belongsToMany(Submenu::class, 'user_submenus');
+    }
+
+    /**
+     * Nama route submodul PERTAMA yang beneran boleh & bisa diakses user ini,
+     * ngikutin urutan Modul/Sub Modul (menus.sort_order / submenus.sort_order).
+     * super_admin selalu lihat semua; role lain di-filter sesuai assignment
+     * user_menus/user_submenus. Dipakai buat redirect setelah login — supaya
+     * role selain super_admin/admin nggak ke-lempar ke User Management
+     * (yang dikunci buat mereka) dan berujung 403.
+     */
+    public function firstAccessibleRouteName(): string
+    {
+        $menus = Menu::where('is_active', true)
+            ->with(['submenus' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get();
+
+        if (!$this->hasRole('super_admin')) {
+            $assignedMenuIds    = $this->menus()->pluck('menus.id')->all();
+            $assignedSubmenuIds = $this->submenus()->pluck('submenus.id')->all();
+
+            $menus = $menus
+                ->map(function ($menu) use ($assignedSubmenuIds) {
+                    $menu->setRelation(
+                        'submenus',
+                        $menu->submenus->filter(fn ($s) => in_array($s->id, $assignedSubmenuIds))->values()
+                    );
+                    return $menu;
+                })
+                ->filter(fn ($menu) => $menu->submenus->isNotEmpty() || in_array($menu->id, $assignedMenuIds))
+                ->values();
+        }
+
+        foreach ($menus as $menu) {
+            if ($menu->submenus->isNotEmpty()) {
+                foreach ($menu->submenus as $sub) {
+                    if ($sub->route_name && Route::has($sub->route_name)) {
+                        return $sub->route_name;
+                    }
+                }
+            } elseif ($menu->route_name && Route::has($menu->route_name)) {
+                return $menu->route_name;
+            }
+        }
+
+        // Belum di-assign menu/submenu apapun — halaman ganti password
+        // selalu boleh diakses siapa saja, jadi aman buat fallback terakhir.
+        return 'password.change';
     }
 }
