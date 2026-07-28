@@ -97,7 +97,7 @@ export default function TrackerIndex() {
     };
 
     return (
-        <AppLayout activeKey="tracker" leftPanel={<LeftPanel filterOptions={filterOptions} auth={auth} />}>
+        <AppLayout activeSubmenu="tracker" leftPanel={<LeftPanel filterOptions={filterOptions} auth={auth} />}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={S.catBar}>
                     <span style={S.mainTag}><i className="fas fa-home" /> Main</span>
