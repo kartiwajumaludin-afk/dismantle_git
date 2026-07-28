@@ -323,75 +323,79 @@ function ImportCard({ cfg, state, onFileSelect, onVerify, onImport, onReset }) {
     const statusColor = { loading: '#00b4d8', success: '#06d6a0', error: '#ff6b6b', '': '#8b949e' }[state.statusType];
 
     return (
-        <div className="rgb-border" style={{ ...S.card, borderColor: dragOver ? color : undefined }}>
-            <div style={{ ...S.cardLabel, color }}>
-                <i className={`fas ${icon}`} /> {label}
-            </div>
-
-            <div
-                style={{ ...S.dropZone, borderColor: dragOver ? color : (state.file ? color : '#2a3140') }}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-            >
-                <i className="fas fa-file-csv" style={{ fontSize: '1.8rem', color: state.file ? color : '#6e7681' }} />
-                <div style={{ fontSize: '.82rem', fontWeight: 600, color: '#e6edf3', marginTop: 6 }}>{state.fileName}</div>
-                <div style={{ fontSize: '.72rem', color: '#6e7681', marginTop: 2 }}>{hint} atau drag &amp; drop</div>
-                {state.fileSize && <div style={S.sizeBadge}>{state.fileSize}</div>}
-                <input
-                    ref={fileInputRef} type="file" accept=".csv,.txt" style={{ display: 'none' }}
-                    onChange={(e) => onFileSelect(type, e.target.files?.[0])}
-                />
-            </div>
-
-            {state.headers.length > 0 && (
-                <div style={S.headerPreview}>
-                    {state.headers.slice(0, 12).map((h, i) => (
-                        <span key={i} style={S.headerChip}>{h}</span>
-                    ))}
-                    {state.headers.length > 12 && <span style={{ color: '#6e7681', fontSize: '.7rem' }}>+{state.headers.length - 12}</span>}
+        // Wrapper luar: conic-gradient RGB (kelihatan cuma di tepi 3px, permanen —
+        // bukan cuma pas import) — inner div (S.card) nutup sisi dalamnya solid.
+        <div className="rgb-card-wrap">
+            <div style={{ ...S.card, borderColor: dragOver ? color : undefined }}>
+                <div style={{ ...S.cardLabel, color }}>
+                    <i className={`fas ${icon}`} /> {label}
                 </div>
-            )}
 
-            {state.showUploadBar && (
-                <div style={S.progressTrack}>
-                    <div style={{ ...S.progressFill, width: `${state.uploadPct}%`, background: '#8b949e' }} />
-                </div>
-            )}
-            {state.showProgressBar && (
-                <div style={S.progressTrack}>
-                    <div style={{ ...S.progressFill, width: `${state.progressPct}%`, background: color }} />
-                </div>
-            )}
-            {state.liveText && (
-                <div style={{ fontSize: '.72rem', color: '#6e7681', fontFamily: 'monospace' }}>{state.liveText}</div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                    disabled={state.verifyDisabled}
-                    onClick={() => onVerify(type)}
-                    style={{ ...S.btn, ...( !state.verifyDisabled ? { background: 'rgba(255,255,255,.08)', color: '#e6edf3' } : {}) }}
+                <div
+                    style={{ ...S.dropZone, borderColor: dragOver ? color : (state.file ? color : '#2a3140') }}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
                 >
-                    <i className="fas fa-check-circle" /> Verify
-                </button>
-                <button
-                    disabled={state.importDisabled}
-                    onClick={() => onImport(type)}
-                    style={{ ...S.btn, ...( !state.importDisabled ? { background: color, color: '#0a0e14', fontWeight: 800 } : {}) }}
-                >
-                    <i className="fas fa-upload" /> Import
-                </button>
+                    <i className="fas fa-file-csv" style={{ fontSize: '1.8rem', color: state.file ? color : '#6e7681' }} />
+                    <div style={{ fontSize: '.82rem', fontWeight: 600, color: '#e6edf3', marginTop: 6 }}>{state.fileName}</div>
+                    <div style={{ fontSize: '.72rem', color: '#6e7681', marginTop: 2 }}>{hint} atau drag &amp; drop</div>
+                    {state.fileSize && <div style={S.sizeBadge}>{state.fileSize}</div>}
+                    <input
+                        ref={fileInputRef} type="file" accept=".csv,.txt" style={{ display: 'none' }}
+                        onChange={(e) => onFileSelect(type, e.target.files?.[0])}
+                    />
+                </div>
+
+                {state.headers.length > 0 && (
+                    <div style={S.headerPreview}>
+                        {state.headers.slice(0, 12).map((h, i) => (
+                            <span key={i} style={S.headerChip}>{h}</span>
+                        ))}
+                        {state.headers.length > 12 && <span style={{ color: '#6e7681', fontSize: '.7rem' }}>+{state.headers.length - 12}</span>}
+                    </div>
+                )}
+
+                {state.showUploadBar && (
+                    <div style={S.progressTrack}>
+                        <div style={{ ...S.progressFill, width: `${state.uploadPct}%`, background: '#8b949e' }} />
+                    </div>
+                )}
+                {state.showProgressBar && (
+                    <div style={S.progressTrack}>
+                        <div style={{ ...S.progressFill, width: `${state.progressPct}%`, background: color }} />
+                    </div>
+                )}
+                {state.liveText && (
+                    <div style={{ fontSize: '.72rem', color: '#6e7681', fontFamily: 'monospace' }}>{state.liveText}</div>
+                )}
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                        disabled={state.verifyDisabled}
+                        onClick={() => onVerify(type)}
+                        style={{ ...S.btn, ...( !state.verifyDisabled ? { background: 'rgba(255,255,255,.08)', color: '#e6edf3' } : {}) }}
+                    >
+                        <i className="fas fa-check-circle" /> Verify
+                    </button>
+                    <button
+                        disabled={state.importDisabled}
+                        onClick={() => onImport(type)}
+                        style={{ ...S.btn, ...( !state.importDisabled ? { background: color, color: '#0a0e14', fontWeight: 800 } : {}) }}
+                    >
+                        <i className="fas fa-upload" /> Import
+                    </button>
+                </div>
+
+                <div style={{ fontSize: '.78rem', color: statusColor }}>{state.status}</div>
+
+                {state.showReset && (
+                    <button onClick={() => onReset(type)} style={S.btnReset}>
+                        <i className="fas fa-undo" /> Import File Baru
+                    </button>
+                )}
             </div>
-
-            <div style={{ fontSize: '.78rem', color: statusColor }}>{state.status}</div>
-
-            {state.showReset && (
-                <button onClick={() => onReset(type)} style={S.btnReset}>
-                    <i className="fas fa-undo" /> Import File Baru
-                </button>
-            )}
         </div>
     );
 }
@@ -405,8 +409,9 @@ const S = {
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '18px', marginBottom: '24px',
     },
     card: {
-        background: '#212631', border: '1px solid #2a3140', borderRadius: '12px',
+        background: '#212631', borderRadius: '11px',
         padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px',
+        flex: 1, height: '100%',
     },
     cardLabel: { fontSize: '.85rem', fontWeight: 800, letterSpacing: '.5px', display: 'flex', alignItems: 'center', gap: '8px' },
     dropZone: {
