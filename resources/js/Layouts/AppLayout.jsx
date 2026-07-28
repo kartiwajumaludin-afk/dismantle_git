@@ -53,9 +53,13 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
         if (isBuilt(sub.route_name)) router.visit(route(sub.route_name));
     };
 
+    // Cegah gestur drag (native HTML5 drag) — ini yang bikin kotak outline
+    // "nyangkut" di tiap icon yang dilewati sampai mouse dilepas.
+    const noDrag = (e) => e.preventDefault();
+
     return (
         <div style={S.root}>
-            <nav style={S.sidebar}>
+            <nav style={S.sidebar} onDragStart={noDrag}>
                 <div className="sidebar-rgb-line" />
                 <div style={S.navIcons}>
                     {menus.map((menu) => {
@@ -65,17 +69,22 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                             <div
                                 key={menu.id}
                                 style={S.navIconWrap}
+                                draggable={false}
+                                onDragStart={noDrag}
+                                onMouseDown={noDrag}
                                 onMouseEnter={() => setHoveredMenu(menu.id)}
                                 onMouseLeave={() => setHoveredMenu(null)}
-                                onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => goToMenu(menu)}
                             >
                                 {isActive && <div style={S.activeBar} />}
-                                <div style={{
-                                    ...S.iconBox,
-                                    ...(isActive ? S.iconBoxActive : isHovered ? S.iconBoxHover : {}),
-                                }}>
-                                    <i className={`fas ${menu.icon}`} />
+                                <div
+                                    draggable={false}
+                                    style={{
+                                        ...S.iconBox,
+                                        ...(isActive ? S.iconBoxActive : isHovered ? S.iconBoxHover : {}),
+                                    }}
+                                >
+                                    <i className={`fas ${menu.icon}`} draggable={false} />
                                 </div>
                                 {isHovered && <span style={S.iconLabel}>{menu.label}</span>}
                             </div>
@@ -178,11 +187,13 @@ const S = {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'space-between', padding: '20px 0',
         userSelect: 'none', WebkitUserSelect: 'none',
+        WebkitUserDrag: 'none',
     },
     navIcons: { display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' },
     navIconWrap: {
         position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center',
         userSelect: 'none', WebkitUserSelect: 'none', WebkitTapHighlightColor: 'transparent', outline: 'none',
+        WebkitUserDrag: 'none',
     },
     activeBar: {
         position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
@@ -194,6 +205,7 @@ const S = {
         width: '44px', height: '44px', borderRadius: '10px',
         border: '1px solid #2a3140', display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '1.1rem', color: '#8b949e', background: '#1c2029',
+        WebkitUserDrag: 'none',
     },
     iconBoxHover: {
         color: '#e6edf3', borderColor: '#3a4255', background: '#232935',
