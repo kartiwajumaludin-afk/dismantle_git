@@ -34,8 +34,11 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error'   => fn () => $request->session()->get('error'),
+                'success'     => fn () => $request->session()->get('success'),
+                'error'       => fn () => $request->session()->get('error'),
+                // Password sementara (create/reset) — cuma lewat sini (session
+                // flash, sekali pakai), TIDAK PERNAH disimpan ke tabel manapun.
+                'credentials' => fn () => $request->session()->get('credentials'),
             ],
         ];
     }
