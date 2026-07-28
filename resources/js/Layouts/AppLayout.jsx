@@ -8,9 +8,21 @@ import { usePage, router } from '@inertiajs/react';
 // NAV_ITEMS masih statis (daftar manual) — nanti diganti dinamis begitu
 // tabel menus/submenus & assignment per-user dipakai buat navigasi
 // beneran (baru kepakai kalau menu access sungguhan sudah di-enforce).
+//
+// Urutan modul lengkap (dari Kang Jawil, jadi acuan urutan icon ke depannya):
+// 1. Dismantle Asset Write-Off (Tracker, Asset View, Workinfo View,
+//    Daily Activity, Import CSV, Site Map, Mode Tracking)
+// 2. Dashboard (Dashboard Analysis, Interactive Tree, Diagram dan Grafik,
+//    Baseline Forecast)
+// 3. BoQ Calculation (BoQ Calculation, BoQ Summary)
+// 4. Inbound Tracking (Inbound Tracker, Inbound Request, Disposal Asset)
+// 5. KickOff (KOM Site, KOM Org Chart, KOM Project, KOM Slide)
+// 6. Daily Reminder
+// 7. User Guide
+// 8. User Management — SELALU PALING BAWAH
 const NAV_ITEMS = [
+    { key: 'import', icon: 'file-import', label: 'Import CSV',      routeName: 'import.index' },
     { key: 'users',  icon: 'users-cog',   label: 'User Management', routeName: 'users.index' },
-    { key: 'import',  icon: 'file-import', label: 'Import CSV',      routeName: 'import.index' },
 ];
 
 export default function AppLayout({ children, leftPanel, activeKey }) {
