@@ -56,6 +56,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                 <div style={S.navIcons}>
                     {menus.map((menu) => {
                         const isActive = activeMenu?.id === menu.id;
+                        const isHovered = hoveredMenu === menu.id;
                         return (
                             <div
                                 key={menu.id}
@@ -65,10 +66,13 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                                 onClick={() => goToMenu(menu)}
                             >
                                 {isActive && <div style={S.activeBar} />}
-                                <div style={{ ...S.iconBox, ...(isActive ? S.iconBoxActive : {}) }}>
+                                <div style={{
+                                    ...S.iconBox,
+                                    ...(isActive ? S.iconBoxActive : isHovered ? S.iconBoxHover : {}),
+                                }}>
                                     <i className={`fas fa-${menu.icon}`} />
                                 </div>
-                                {hoveredMenu === menu.id && <span style={S.iconLabel}>{menu.label}</span>}
+                                {isHovered && <span style={S.iconLabel}>{menu.label}</span>}
                             </div>
                         );
                     })}
@@ -175,13 +179,18 @@ const S = {
         position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
         background: '#00b4d8', borderRadius: '0 3px 3px 0', boxShadow: '0 0 8px #00b4d8',
     },
+    // Nonaktif: TETAP kelihatan (box + border jelas), cuma warnanya lebih
+    // muted dari yang aktif — bukan transparan total kayak kemarin.
     iconBox: {
         width: '44px', height: '44px', borderRadius: '10px',
-        border: '1px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.1rem', color: '#4a5265', background: 'transparent',
+        border: '1px solid #2a3140', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '1.1rem', color: '#8b949e', background: '#1c2029',
+    },
+    iconBoxHover: {
+        color: '#e6edf3', borderColor: '#3a4255', background: '#232935',
     },
     iconBoxActive: {
-        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff',
+        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff', borderColor: '#00b4d8',
         boxShadow: '0 4px 14px rgba(0,180,216,.45)',
     },
     iconLabel: {
