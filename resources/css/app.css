@@ -94,3 +94,28 @@ input::placeholder { color: #6e7681 !important; }
 }
 .rgb-text { animation: rgbCycle 3s infinite linear; font-weight: 600; }
 .animate-slide-in { animation: slideIn 0.2s ease forwards; }
+
+/* ── RGB border kartu — permanen (bukan cuma pas proses), dipakai di
+   kartu Import CSV dan kartu lain yang perlu tampil "hidup" ── */
+@property --rgb-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+@keyframes rgbCardSpin {
+    0%   { --rgb-angle: 0deg; }
+    100% { --rgb-angle: 360deg; }
+}
+.rgb-card-wrap {
+    position: relative;
+    border-radius: 14px;
+    padding: 3px;
+    display: flex;
+    flex-direction: column;
+    animation: rgbCardSpin 4s linear infinite;
+    background: conic-gradient(
+        from var(--rgb-angle),
+        #ff0000, #ff7700, #ffff00, #00ff00,
+        #00ffff, #0077ff, #8800ff, #ff0088, #ff0000
+    );
+}
