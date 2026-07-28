@@ -23,7 +23,7 @@ export default function AssetView() {
     };
 
     return (
-        <AppLayout activeKey="asset">
+        <AppLayout activeSubmenu="asset">
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={S.toolbar}>
                     <h2 style={S.title}><i className="fas fa-box" style={{ color: '#06d6a0', marginRight: 10 }} /> Asset View</h2>
