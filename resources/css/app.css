@@ -50,3 +50,34 @@ input::placeholder { color: #6e7681 !important; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #141821; }
 ::-webkit-scrollbar-thumb { background: #00b4d8; border-radius: 4px; }
+
+/* ── RGB animasi — dipakai di sidebar (vertikal) dan bar submenu (horizontal),
+   wajib ada di semua modul sesuai UI Approve ── */
+@keyframes rgbLineMoveVertical {
+    0%, 100% { background-position: 0% 0%; }
+    50%      { background-position: 0% 100%; }
+}
+@keyframes rgbLineMove {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+@keyframes rgbCycle {
+    0%   { color: #ff0000; }
+    33%  { color: #00ff00; }
+    66%  { color: #0000ff; }
+    100% { color: #ff0000; }
+}
+
+.sidebar-rgb-line {
+    position: absolute; top: 0; right: 0; width: 3px; height: 100%;
+    background: linear-gradient(180deg, #ff0000, #00ff00, #0000ff, #ff0000);
+    background-size: 100% 400%;
+    animation: rgbLineMoveVertical 4s ease-in-out infinite;
+}
+.rgb-line-full {
+    height: 3px; width: 100%;
+    background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff, #ff0000);
+    background-size: 400% 100%;
+    animation: rgbLineMove 4s ease-in-out infinite;
+}
+.rgb-text { animation: rgbCycle 3s infinite linear; font-weight: 600; }
