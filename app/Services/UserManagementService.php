@@ -52,8 +52,10 @@ class UserManagementService
             'phone'                => $data['phone'] ?? null,
             'password'             => Hash::make($data['password'] ?? 'dismantle@2026'),
             'is_active'            => true,
-            'active_from'          => $data['active_from'] ?? null,
-            'active_until'         => $data['active_until'] ?? null,
+            // Pakai ?: (bukan ??) supaya string kosong dari input date yang
+            // dikosongkan ikut dianggap null, bukan disimpan sebagai ''.
+            'active_from'          => $data['active_from'] ?: null,
+            'active_until'         => $data['active_until'] ?: null,
             'must_change_password' => $data['must_change_password'] ?? true,
             'created_by'           => $currentUser?->id,
             'can_access_web'       => $data['can_access_web'] ?? true,
@@ -75,8 +77,8 @@ class UserManagementService
             'name'              => $data['full_name'],
             'email'             => $data['email'],
             'phone'             => $data['phone'] ?? null,
-            'active_from'       => $data['active_from'] ?? null,
-            'active_until'      => $data['active_until'] ?? null,
+            'active_from'       => $data['active_from'] ?: null,
+            'active_until'      => $data['active_until'] ?: null,
             'can_access_web'    => $data['can_access_web'] ?? $user->can_access_web,
             'can_access_mobapp' => $data['can_access_mobapp'] ?? $user->can_access_mobapp,
         ]);
