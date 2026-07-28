@@ -304,7 +304,7 @@ export default function ImportIndex({ stats }) {
     };
 
     return (
-        <AppLayout activeKey="import">
+        <AppLayout activeSubmenu="import_csv">
             <div style={S.wrap}>
                 <div style={S.statsBar}>
                     {STATS_CONFIG.map((s) => (
