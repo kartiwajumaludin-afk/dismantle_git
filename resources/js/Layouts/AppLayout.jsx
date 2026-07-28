@@ -3,12 +3,19 @@ import { usePage, router } from '@inertiajs/react';
 
 // Shell UI Approve: sidebar icon (kiri) + RGB line vertikal, header atas,
 // RGB line horizontal, dan left panel opsional (dipakai buat form
-// Create User dkk) yang bisa di-collapse. Sidebar sementara statis
-// (cuma User Management) — nanti diganti dinamis begitu tabel
-// menus/submenus & assignment-nya dipakai buat navigasi beneran.
-export default function AppLayout({ children, leftPanel, activeIcon = 'users-cog' }) {
+// Create User / upload dkk) yang bisa di-collapse.
+//
+// NAV_ITEMS masih statis (daftar manual) — nanti diganti dinamis begitu
+// tabel menus/submenus & assignment per-user dipakai buat navigasi
+// beneran (baru kepakai kalau menu access sungguhan sudah di-enforce).
+const NAV_ITEMS = [
+    { key: 'users',  icon: 'users-cog',   label: 'User Management', routeName: 'users.index' },
+    { key: 'import',  icon: 'file-import', label: 'Import CSV',      routeName: 'import.index' },
+];
+
+export default function AppLayout({ children, leftPanel, activeKey }) {
     const { auth } = usePage().props;
-    const [hovered, setHovered] = useState(false);
+    const [hoveredKey, setHoveredKey] = useState(null);
     const [panelOpen, setPanelOpen] = useState(true);
 
     const handleLogout = () => router.post(route('logout'));
@@ -18,16 +25,23 @@ export default function AppLayout({ children, leftPanel, activeIcon = 'users-cog
             <nav style={S.sidebar}>
                 <div className="sidebar-rgb-line" />
                 <div style={S.navIcons}>
-                    <div
-                        style={S.navIconWrap}
-                        onMouseEnter={() => setHovered(true)}
-                        onMouseLeave={() => setHovered(false)}
-                    >
-                        <div style={{ ...S.iconBox, ...S.iconBoxActive }}>
-                            <i className={`fas fa-${activeIcon}`} />
+                    {NAV_ITEMS.map((item) => (
+                        <div
+                            key={item.key}
+                            style={S.navIconWrap}
+                            onMouseEnter={() => setHoveredKey(item.key)}
+                            onMouseLeave={() => setHoveredKey(null)}
+                            onClick={() => router.visit(route(item.routeName))}
+                        >
+                            <div style={{
+                                ...S.iconBox,
+                                ...(activeKey === item.key ? S.iconBoxActive : {}),
+                            }}>
+                                <i className={`fas fa-${item.icon}`} />
+                            </div>
+                            {hoveredKey === item.key && <span style={S.iconLabel}>{item.label}</span>}
                         </div>
-                        {hovered && <span style={S.iconLabel}>User Management</span>}
-                    </div>
+                    ))}
                 </div>
                 <button style={S.logoutIcon} onClick={handleLogout} title="Logout">
                     <i className="fas fa-sign-out-alt" />
