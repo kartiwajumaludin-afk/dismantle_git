@@ -38,15 +38,11 @@ class HandleInertiaRequests extends Middleware
                     'regions'   => $user->regions->map(fn ($r) => ['code' => $r->code])->values(),
                 ] : null,
             ],
-            // Struktur Modul + Sub Modul buat sidebar & top-bar — sengaja
-            // di-share global (bukan per-user) karena enforcement akses
-            // menu/submenu belum dipasang; semua user yang login lihat
-            // struktur yang sama dulu.
-            'menus' => $user ? fn () => Menu::where('is_active', true)
-                ->with(['submenus' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
-                ->orderBy('sort_order')
-                ->get(['id', 'menu_key', 'label', 'icon', 'route_name', 'sort_order'])
-                : [],
+            // Struktur Modul + Sub Modul buat sidebar & top-bar — di-filter
+            // sesuai assignment user_menus/user_submenus. super_admin selalu
+            // lihat semua; role lain cuma lihat menu/submenu yang di-centang
+            // pas dibuatkan akunnya di User Management.
+            'menus' => $user ? fn () => $this->visibleMenus($user) : [],
             'flash' => [
                 'success'     => fn () => $request->session()->get('success'),
                 'error'       => fn () => $request->session()->get('error'),
@@ -55,5 +51,34 @@ class HandleInertiaRequests extends Middleware
                 'credentials' => fn () => $request->session()->get('credentials'),
             ],
         ];
+    }
+
+    private function visibleMenus($user)
+    {
+        $menus = Menu::where('is_active', true)
+            ->with(['submenus' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get(['id', 'menu_key', 'label', 'icon', 'route_name', 'sort_order']);
+
+        if ($user->hasRole('super_admin')) {
+            return $menus;
+        }
+
+        $assignedMenuIds    = $user->menus()->pluck('menus.id')->all();
+        $assignedSubmenuIds = $user->submenus()->pluck('submenus.id')->all();
+
+        return $menus
+            ->map(function ($menu) use ($assignedSubmenuIds) {
+                $menu->setRelation(
+                    'submenus',
+                    $menu->submenus->filter(fn ($s) => in_array($s->id, $assignedSubmenuIds))->values()
+                );
+                return $menu;
+            })
+            // Menu tetap tampil kalau ada minimal 1 submenu yang di-assign,
+            // ATAU (buat menu tanpa submenu, misal User Guide/Daily Reminder)
+            // menu itu sendiri yang di-assign langsung.
+            ->filter(fn ($menu) => $menu->submenus->isNotEmpty() || in_array($menu->id, $assignedMenuIds))
+            ->values();
     }
 }
