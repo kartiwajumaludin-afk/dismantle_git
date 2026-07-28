@@ -77,10 +77,20 @@ Route::middleware(['auth', 'active.user'])->group(function () {
 // Nanti satu-satu diganti jadi Controller sungguhan pas gilirannya, urutan
 // sesuai PROJECT_SPEC.md — TIDAK bertentangan sama alur "1 modul per chat",
 // placeholder ini murni pondasi/navigasi, bukan modul yang sudah "jadi".
+//
+// Pakai function() ... use(...) biasa (bukan arrow fn bersarang) supaya
+// $title/$icon/$activeSubmenu KEPASTI ketangkep di closure dalamnya.
 // ══════════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'active.user'])->group(function () {
-    $placeholder = fn (string $title, string $icon, string $activeSubmenu) =>
-        fn () => Inertia::render('Placeholder', compact('title', 'icon', 'activeSubmenu'));
+    $placeholder = function (string $title, string $icon, string $activeSubmenu) {
+        return function () use ($title, $icon, $activeSubmenu) {
+            return Inertia::render('Placeholder', [
+                'title'         => $title,
+                'icon'          => $icon,
+                'activeSubmenu' => $activeSubmenu,
+            ]);
+        };
+    };
 
     // -- Dismantle Asset Write-Off (sisanya) --
     Route::get('/daily-activity',    $placeholder('Daily Activity', 'fa-running', 'daily_activity'))->name('daily.index');
