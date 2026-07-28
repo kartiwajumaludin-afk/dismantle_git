@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 
 // Shell UI Approve: sidebar = 1 icon per MODUL (dari tabel `menus`), top bar =
-// judul Modul aktif + tab SUB MODUL-nya (dari tabel `submenus`) — ini yang
-// sempat kebalik kemarin (submodul taruh di sidebar). Sekarang strukturnya
-// benar: sidebar buat pindah Modul, tab atas buat pindah Sub Modul dalam
-// Modul yang sama.
+// judul Modul aktif (lebar = lebar Left Panel, biar sejajar) + tab SUB MODUL
+// (lebar dibagi rata sejumlah sub modul, ngisi penuh Right Panel).
 //
-// Sub modul yang belum punya halaman/route beneran ditampilkan abu-abu +
-// label "Segera" (bukan link mati) — dicek pakai route().has().
+// Sub modul yang belum punya halaman/route beneran diarahkan ke halaman
+// Placeholder ("Under Development") — bukan tab mati — dicek pakai
+// route().has().
+const LEFT_PANEL_WIDTH = 350;
+
 export default function AppLayout({ children, leftPanel, activeSubmenu }) {
     const { auth, menus = [] } = usePage().props;
     const [panelOpen, setPanelOpen] = useState(true);
@@ -53,23 +54,24 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
             <nav style={S.sidebar}>
                 <div className="sidebar-rgb-line" />
                 <div style={S.navIcons}>
-                    {menus.map((menu) => (
-                        <div
-                            key={menu.id}
-                            style={S.navIconWrap}
-                            onMouseEnter={() => setHoveredMenu(menu.id)}
-                            onMouseLeave={() => setHoveredMenu(null)}
-                            onClick={() => goToMenu(menu)}
-                        >
-                            <div style={{
-                                ...S.iconBox,
-                                ...(activeMenu?.id === menu.id ? S.iconBoxActive : {}),
-                            }}>
-                                <i className={`fas fa-${menu.icon}`} />
+                    {menus.map((menu) => {
+                        const isActive = activeMenu?.id === menu.id;
+                        return (
+                            <div
+                                key={menu.id}
+                                style={S.navIconWrap}
+                                onMouseEnter={() => setHoveredMenu(menu.id)}
+                                onMouseLeave={() => setHoveredMenu(null)}
+                                onClick={() => goToMenu(menu)}
+                            >
+                                {isActive && <div style={S.activeBar} />}
+                                <div style={{ ...S.iconBox, ...(isActive ? S.iconBoxActive : {}) }}>
+                                    <i className={`fas fa-${menu.icon}`} />
+                                </div>
+                                {hoveredMenu === menu.id && <span style={S.iconLabel}>{menu.label}</span>}
                             </div>
-                            {hoveredMenu === menu.id && <span style={S.iconLabel}>{menu.label}</span>}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
                 <button style={S.logoutIcon} onClick={handleLogout} title="Logout">
                     <i className="fas fa-sign-out-alt" />
@@ -100,7 +102,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
 
                 {activeMenu && (
                     <div style={S.menuBar}>
-                        <div className="rgb-border" style={S.menuTitle}>
+                        <div className="rgb-border" style={{ ...S.menuTitle, width: `${LEFT_PANEL_WIDTH}px` }}>
                             <span>{activeMenu.label}</span>
                         </div>
                         <div style={S.submenuBar}>
@@ -136,15 +138,15 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                     {leftPanel && (
                         <>
                             <button
-                                style={{ ...S.panelToggle, left: panelOpen ? '350px' : '0px' }}
+                                style={{ ...S.panelToggle, left: panelOpen ? `${LEFT_PANEL_WIDTH}px` : '0px' }}
                                 onClick={() => setPanelOpen(!panelOpen)}
                             >
                                 <i className={`fas fa-chevron-${panelOpen ? 'left' : 'right'}`} />
                             </button>
                             <div style={{
                                 ...S.leftPanel,
-                                width: panelOpen ? '350px' : '0px',
-                                minWidth: panelOpen ? '350px' : '0px',
+                                width: panelOpen ? `${LEFT_PANEL_WIDTH}px` : '0px',
+                                minWidth: panelOpen ? `${LEFT_PANEL_WIDTH}px` : '0px',
                                 opacity: panelOpen ? 1 : 0,
                                 overflow: panelOpen ? 'visible' : 'hidden',
                             }}>
@@ -168,14 +170,19 @@ const S = {
         justifyContent: 'space-between', padding: '20px 0',
     },
     navIcons: { display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' },
-    navIconWrap: { position: 'relative', cursor: 'pointer' },
+    navIconWrap: { position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center' },
+    activeBar: {
+        position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
+        background: '#00b4d8', borderRadius: '0 3px 3px 0', boxShadow: '0 0 8px #00b4d8',
+    },
     iconBox: {
         width: '44px', height: '44px', borderRadius: '10px',
-        border: '1px solid #2a3140', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.1rem', color: '#8b949e',
+        border: '1px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '1.1rem', color: '#4a5265', background: 'transparent',
     },
     iconBoxActive: {
-        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff', borderColor: '#00b4d8',
+        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff',
+        boxShadow: '0 4px 14px rgba(0,180,216,.45)',
     },
     iconLabel: {
         position: 'absolute', left: 'calc(100% + 12px)', top: '50%', transform: 'translateY(-50%)',
@@ -215,18 +222,18 @@ const S = {
         background: '#212631', borderBottom: '1px solid #2a3140',
     },
     menuTitle: {
-        width: '260px', flexShrink: 0, height: '100%',
+        flexShrink: 0, height: '100%',
         display: 'flex', alignItems: 'center', padding: '0 20px',
         fontSize: '.95rem', fontWeight: 700, color: '#e6edf3',
         background: '#212631', borderRight: '3px solid',
     },
     submenuBar: {
         flex: 1, height: '100%', display: 'flex', gap: '4px',
-        padding: '7px', alignItems: 'stretch', overflowX: 'auto',
+        padding: '7px', alignItems: 'stretch',
     },
     submenuTab: {
-        display: 'flex', alignItems: 'center', gap: '7px', padding: '0 14px',
-        borderRadius: '8px', fontSize: '.82rem', fontWeight: 600, whiteSpace: 'nowrap',
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '0 10px',
+        borderRadius: '8px', fontSize: '.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden',
     },
     soonBadge: {
         fontSize: '.6rem', background: 'rgba(255,255,255,.08)', padding: '1px 6px',
