@@ -119,3 +119,25 @@ input::placeholder { color: #6e7681 !important; }
         #00ffff, #0077ff, #8800ff, #ff0088, #ff0000
     );
 }
+
+/* ── Sidebar icon: matiin SEMUA outline/box-shadow bawaan browser di
+   semua state (hover/focus/focus-visible/active) — dipasang lewat class,
+   bukan cuma inline style, karena beberapa browser nge-render focus ring
+   pakai !important internal yang nggak ketutup inline style biasa. ── */
+.sidebar-icon-box,
+.sidebar-icon-box:hover,
+.sidebar-icon-box:focus,
+.sidebar-icon-box:focus-visible,
+.sidebar-icon-box:active {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+.sidebar-icon-wrap,
+.sidebar-icon-wrap:hover,
+.sidebar-icon-wrap:focus,
+.sidebar-icon-wrap:focus-visible,
+.sidebar-icon-wrap:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
