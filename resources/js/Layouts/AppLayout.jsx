@@ -53,13 +53,9 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
         if (isBuilt(sub.route_name)) router.visit(route(sub.route_name));
     };
 
-    // Cegah gestur drag (native HTML5 drag) — ini yang bikin kotak outline
-    // "nyangkut" di tiap icon yang dilewati sampai mouse dilepas.
-    const noDrag = (e) => e.preventDefault();
-
     return (
         <div style={S.root}>
-            <nav style={S.sidebar} onDragStart={noDrag}>
+            <nav style={S.sidebar}>
                 <div className="sidebar-rgb-line" />
                 <div style={S.navIcons}>
                     {menus.map((menu) => {
@@ -68,23 +64,21 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                         return (
                             <div
                                 key={menu.id}
+                                className="sidebar-icon-wrap"
                                 style={S.navIconWrap}
-                                draggable={false}
-                                onDragStart={noDrag}
-                                onMouseDown={noDrag}
                                 onMouseEnter={() => setHoveredMenu(menu.id)}
                                 onMouseLeave={() => setHoveredMenu(null)}
                                 onClick={() => goToMenu(menu)}
                             >
                                 {isActive && <div style={S.activeBar} />}
                                 <div
-                                    draggable={false}
+                                    className="sidebar-icon-box"
                                     style={{
                                         ...S.iconBox,
                                         ...(isActive ? S.iconBoxActive : isHovered ? S.iconBoxHover : {}),
                                     }}
                                 >
-                                    <i className={`fas ${menu.icon}`} draggable={false} />
+                                    <i className={`fas ${menu.icon}`} />
                                 </div>
                                 {isHovered && <span style={S.iconLabel}>{menu.label}</span>}
                             </div>
@@ -186,26 +180,19 @@ const S = {
         background: 'linear-gradient(180deg,#141821 0%,#1c2029 100%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'space-between', padding: '20px 0',
-        userSelect: 'none', WebkitUserSelect: 'none',
-        WebkitUserDrag: 'none',
     },
     navIcons: { display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' },
-    navIconWrap: {
-        position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center',
-        userSelect: 'none', WebkitUserSelect: 'none', WebkitTapHighlightColor: 'transparent', outline: 'none',
-        WebkitUserDrag: 'none',
-    },
+    navIconWrap: { position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center' },
     activeBar: {
         position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
         background: '#00b4d8', borderRadius: '0 3px 3px 0', boxShadow: '0 0 8px #00b4d8',
     },
     // Nonaktif: TETAP kelihatan (box + border jelas), cuma warnanya lebih
-    // muted dari yang aktif — bukan transparan total kayak kemarin.
+    // muted dari yang aktif.
     iconBox: {
         width: '44px', height: '44px', borderRadius: '10px',
         border: '1px solid #2a3140', display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '1.1rem', color: '#8b949e', background: '#1c2029',
-        WebkitUserDrag: 'none',
     },
     iconBoxHover: {
         color: '#e6edf3', borderColor: '#3a4255', background: '#232935',
@@ -218,7 +205,7 @@ const S = {
         position: 'absolute', left: 'calc(100% + 12px)', top: '50%', transform: 'translateY(-50%)',
         background: '#212631', color: '#e6edf3', padding: '6px 12px', borderRadius: '6px',
         fontSize: '.8rem', whiteSpace: 'nowrap', border: '1px solid #2a3140', zIndex: 1001,
-        userSelect: 'none', pointerEvents: 'none',
+        pointerEvents: 'none',
     },
     logoutIcon: {
         width: '44px', height: '44px', borderRadius: '10px',
