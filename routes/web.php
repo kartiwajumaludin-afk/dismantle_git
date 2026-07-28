@@ -22,6 +22,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout',          [AuthController::class, 'logout'])->name('logout');
 });
 
+// Alias 'dashboard' — dipakai internal oleh middleware guest bawaan Laravel
+// buat redirect kalau user yang sudah login coba buka /login lagi.
+Route::get('/dashboard', function () {
+    return redirect()->route('users.index');
+})->middleware('auth')->name('dashboard');
+
 // ══════════════════════════════════════════════════════════════════════
 // MODUL — semua butuh login + akun aktif
 // ══════════════════════════════════════════════════════════════════════
