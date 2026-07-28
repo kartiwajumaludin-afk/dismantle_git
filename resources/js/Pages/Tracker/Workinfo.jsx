@@ -31,7 +31,7 @@ export default function WorkinfoView() {
     };
 
     return (
-        <AppLayout activeKey="workinfo">
+        <AppLayout activeSubmenu="workinfo">
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={S.toolbar}>
                     <h2 style={S.title}><i className="fas fa-clipboard-list" style={{ color: '#9d4edd', marginRight: 10 }} /> Workinfo View</h2>
