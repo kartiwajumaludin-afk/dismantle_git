@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePage, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -9,12 +9,25 @@ const isOnline = (lastSeen) => {
 };
 
 export default function UserManagementIndex() {
-    const { users, roles, regions, menus, filters } = usePage().props;
+    const { users, roles, regions, menus, filters, flash } = usePage().props;
     const [editModal, setEditModal]     = useState(null);
     const [detailModal, setDetailModal] = useState(null);
     const [tab, setTab]                 = useState(filters?.access || 'web');
     const [search, setSearch]           = useState(filters?.search ?? '');
     const [roleFilter, setRoleFilter]   = useState(filters?.role ?? '');
+
+    // Daftar password sementara (create/reset) yang baru dibuat di sesi ini.
+    // Cuma hidup di memori browser — nambah tiap create/reset, dan hilang
+    // total begitu halaman di-refresh/ditutup. TIDAK PERNAH disimpan ke DB.
+    const [tempPasswords, setTempPasswords] = useState([]);
+    const lastCredId = useRef(null);
+
+    useEffect(() => {
+        if (flash?.credentials && flash.credentials.id !== lastCredId.current) {
+            lastCredId.current = flash.credentials.id;
+            setTempPasswords(prev => [...prev, flash.credentials]);
+        }
+    }, [flash?.credentials]);
 
     const applyFilter = (overrides = {}) => {
         router.get(route('users.index'), {
@@ -39,6 +52,10 @@ export default function UserManagementIndex() {
     return (
         <AppLayout leftPanel={<CreateUserForm roles={roles} regions={regions} menus={menus} />}>
             <div style={S.wrap}>
+                {tempPasswords.length > 0 && (
+                    <PasswordPanel items={tempPasswords} onClear={() => setTempPasswords([])} />
+                )}
+
                 {/* Tab Web / Field Team — tambahan di rebuild ini */}
                 <div style={S.tabBar}>
                     <button
@@ -147,7 +164,7 @@ export default function UserManagementIndex() {
                                         <div style={S.actions}>
                                             <ActionBtn color="#00b4d8" icon="fa-eye"       title="Detail"        onClick={() => setDetailModal(user)} />
                                             <ActionBtn color="#06d6a0" icon="fa-edit"      title="Edit"          onClick={() => setEditModal(user)} />
-                                            <ActionBtn color="#ffd43b" icon="fa-key"       title="Reset Password" onClick={() => { if (confirm('Reset password ke default?')) router.post(route('users.reset-password', user.id)); }} />
+                                            <ActionBtn color="#ffd43b" icon="fa-key"       title="Reset Password" onClick={() => { if (confirm(`Reset password "${user.username}" ke password baru (acak)?`)) router.post(route('users.reset-password', user.id)); }} />
                                             <ActionBtn color={user.is_active ? '#ff6b6b' : '#06d6a0'} icon={user.is_active ? 'fa-user-slash' : 'fa-user-check'} title={user.is_active ? 'Nonaktifkan' : 'Aktifkan'} onClick={() => router.post(route('users.toggle-active', user.id))} />
                                             <ActionBtn color="#ff4466" icon="fa-trash-alt" title="Hapus User" onClick={() => { if (confirm(`Hapus user "${user.username}"? Tindakan ini tidak bisa dibatalkan.`)) router.delete(route('users.destroy', user.id)); }} />
                                         </div>
@@ -162,6 +179,54 @@ export default function UserManagementIndex() {
             {editModal   && <EditUserModal user={editModal}   roles={roles} regions={regions} menus={menus} onClose={() => setEditModal(null)} />}
             {detailModal && <DetailModal  user={detailModal}  onClose={() => setDetailModal(null)} />}
         </AppLayout>
+    );
+}
+
+/* ─── PANEL DAFTAR PASSWORD SEMENTARA ─── */
+function PasswordPanel({ items, onClear }) {
+    const [copiedId, setCopiedId] = useState(null);
+
+    const copyOne = (item) => {
+        navigator.clipboard.writeText(`${item.username} : ${item.password}`);
+        setCopiedId(item.id);
+        setTimeout(() => setCopiedId(null), 1500);
+    };
+
+    const copyAll = () => {
+        const text = items.map(i => `${i.username} : ${i.password}`).join('\n');
+        navigator.clipboard.writeText(text);
+    };
+
+    return (
+        <div style={P.wrap}>
+            <div style={P.header}>
+                <div style={P.headerLeft}>
+                    <i className="fas fa-key" style={{ color: '#ffd43b' }} />
+                    <span>Password Sementara ({items.length}) — cuma tampil sampai halaman ini di-refresh</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button style={P.btnCopyAll} onClick={copyAll}>
+                        <i className="fas fa-copy" /> Copy Semua
+                    </button>
+                    <button style={P.btnClose} onClick={onClear}>
+                        <i className="fas fa-times" />
+                    </button>
+                </div>
+            </div>
+            <div style={P.list}>
+                {items.map(item => (
+                    <div key={item.id} style={P.row}>
+                        <span style={P.rowUser}>{item.username}</span>
+                        <span style={P.rowAction}>{item.action}</span>
+                        <code style={P.rowPass}>{item.password}</code>
+                        <button style={P.btnCopyOne} onClick={() => copyOne(item)}>
+                            <i className={`fas ${copiedId === item.id ? 'fa-check' : 'fa-copy'}`} />
+                            {copiedId === item.id ? 'Ter-copy' : 'Copy'}
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -670,4 +735,17 @@ const M = {
     title:   { fontSize: '1rem', fontWeight: 700, color: '#e6edf3' },
     close:   { background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' },
     body:    { padding: '20px', maxHeight: '85vh', overflowY: 'auto' },
+};
+const P = {
+    wrap:   { margin: '14px 20px 0', background: 'rgba(255,212,59,.06)', border: '1px solid rgba(255,212,59,.25)', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid rgba(255,212,59,.2)' },
+    headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '.82rem', fontWeight: 700, color: '#ffd43b' },
+    btnCopyAll: { padding: '5px 12px', background: 'rgba(255,212,59,.15)', border: '1px solid rgba(255,212,59,.35)', borderRadius: '6px', color: '#ffd43b', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
+    btnClose:   { padding: '5px 9px', background: 'transparent', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '.85rem' },
+    list:   { maxHeight: '160px', overflowY: 'auto', padding: '6px 14px' },
+    row:    { display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', borderBottom: '1px dashed rgba(255,255,255,.06)', fontSize: '.8rem' },
+    rowUser:   { color: '#00b4d8', fontWeight: 600, minWidth: '120px' },
+    rowAction: { color: '#8b949e', fontSize: '.72rem', minWidth: '60px' },
+    rowPass:   { flex: 1, background: 'rgba(0,0,0,.25)', padding: '3px 10px', borderRadius: '5px', color: '#ffd43b', fontFamily: 'monospace', fontSize: '.82rem' },
+    btnCopyOne:{ padding: '4px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid #2a3140', borderRadius: '5px', color: '#e6edf3', fontSize: '.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
 };
