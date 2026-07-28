@@ -47,9 +47,17 @@ class UserManagementController extends Controller
             'can_access_mobapp' => 'boolean',
         ]);
 
-        $this->service->createUser($request->all());
+        // Cuma super_admin yang boleh bikin akun super_admin baru — admin
+        // biasa nggak boleh nyiptain "sesama admin tertinggi".
+        if ($request->role === 'super_admin' && !Auth::user()->hasRole('super_admin')) {
+            return back()->with('error', 'Hanya Super Admin yang boleh membuat akun dengan role Super Admin.');
+        }
 
-        return back()->with('success', 'User berhasil dibuat. Password default: dismantle@2026');
+        $result = $this->service->createUser($request->all());
+
+        return back()->with('success',
+            "User '{$result['user']->username}' berhasil dibuat. Password sementara: {$result['temp_password']} — catat/informasikan sekarang, tidak akan ditampilkan lagi."
+        );
     }
 
     public function show(User $user)
@@ -92,6 +100,20 @@ class UserManagementController extends Controller
             'can_access_mobapp' => 'boolean',
         ]);
 
+        /** @var \App\Models\User $actor */
+        $actor = Auth::user();
+
+        // Admin biasa nggak boleh naikin siapapun (termasuk diri sendiri)
+        // jadi super_admin, dan nggak boleh ubah akun super_admin lain.
+        if (!$actor->hasRole('super_admin')) {
+            if ($request->role === 'super_admin') {
+                return back()->with('error', 'Hanya Super Admin yang boleh memberikan role Super Admin.');
+            }
+            if ($user->hasRole('super_admin')) {
+                return back()->with('error', 'Akun Super Admin hanya bisa diubah oleh Super Admin lain.');
+            }
+        }
+
         $this->service->updateUser($user, $request->all());
 
         return back()->with('success', 'User berhasil diperbarui.');
@@ -99,13 +121,32 @@ class UserManagementController extends Controller
 
     public function resetPassword(User $user): RedirectResponse
     {
-        $this->service->resetPassword($user);
+        /** @var \App\Models\User $actor */
+        $actor = Auth::user();
 
-        return back()->with('success', 'Password direset ke: dismantle@2026');
+        if ($user->hasRole('super_admin') && !$actor->hasRole('super_admin')) {
+            return back()->with('error', 'Password akun Super Admin hanya bisa direset oleh Super Admin lain.');
+        }
+
+        $tempPassword = $this->service->resetPassword($user);
+
+        return back()->with('success',
+            "Password berhasil direset. Password baru: {$tempPassword} — catat/informasikan sekarang, tidak akan ditampilkan lagi."
+        );
     }
 
     public function toggleActive(User $user): RedirectResponse
     {
+        /** @var \App\Models\User $actor */
+        $actor = Auth::user();
+
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'Tidak bisa menonaktifkan akun sendiri.');
+        }
+        if ($user->hasRole('super_admin') && !$actor->hasRole('super_admin')) {
+            return back()->with('error', 'Akun Super Admin hanya bisa dinonaktifkan oleh Super Admin lain.');
+        }
+
         $user->update(['is_active' => !$user->is_active]);
 
         return back()->with('success', 'Status user diperbarui.');
