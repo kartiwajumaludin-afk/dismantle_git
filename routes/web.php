@@ -1,6 +1,7 @@
 <?php
 // path: routes/web.php
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Import\ImportController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,16 @@ Route::middleware(['auth', 'active.user', 'role:super_admin|admin'])->group(func
     Route::post('/users/{user}/reset-password',  [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
     Route::post('/users/{user}/toggle-active',   [UserManagementController::class, 'toggleActive'])->name('users.toggle-active');
     Route::delete('/users/{user}',               [UserManagementController::class, 'destroy'])->name('users.destroy');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// IMPORT CSV — Bagian 1 doang (upload -> tabel staging).
+// Master Engine (join ke tracker) menyusul bareng modul Tracker.
+// ══════════════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::get('/import',          [ImportController::class, 'index'])->name('import.index');
+    Route::post('/import/verify',  [ImportController::class, 'verify'])->name('import.verify');
+    Route::post('/import/stream',  [ImportController::class, 'uploadAndStream'])->name('import.stream');
 });
 
 // Redirect root ke login/users
