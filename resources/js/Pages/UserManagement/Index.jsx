@@ -50,7 +50,7 @@ export default function UserManagementIndex() {
     }[role] || '#8b949e');
 
     return (
-        <AppLayout leftPanel={<CreateUserForm roles={roles} regions={regions} menus={menus} />}>
+        <AppLayout activeKey="users" leftPanel={<CreateUserForm roles={roles} regions={regions} menus={menus} />}>
             <div style={S.wrap}>
                 {tempPasswords.length > 0 && (
                     <PasswordPanel items={tempPasswords} onClear={() => setTempPasswords([])} />
