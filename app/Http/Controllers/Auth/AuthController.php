@@ -45,7 +45,9 @@ class AuthController extends Controller
             return redirect()->route('password.change');
         }
 
-        return redirect()->intended(route('users.index'));
+        // JANGAN hardcode ke users.index — itu dikunci super_admin/admin
+        // doang, bikin role lain (vendor, dst) langsung 403 tiap login.
+        return redirect()->intended(route($user->firstAccessibleRouteName()));
     }
 
     public function logout(Request $request)
@@ -75,6 +77,6 @@ class AuthController extends Controller
             'must_change_password' => false,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'Password berhasil diubah.');
+        return redirect()->route($u->firstAccessibleRouteName())->with('success', 'Password berhasil diubah.');
     }
 }
