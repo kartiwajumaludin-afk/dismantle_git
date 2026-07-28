@@ -61,4 +61,19 @@ class User extends Authenticatable
 
         return true;
     }
+
+    public function regions()
+    {
+        return $this->belongsToMany(Region::class, 'user_regions');
+    }
+
+    public function menus()
+    {
+        return $this->belongsToMany(Menu::class, 'user_menus');
+    }
+
+    public function submenus()
+    {
+        return $this->belongsToMany(Submenu::class, 'user_submenus');
+    }
 }
