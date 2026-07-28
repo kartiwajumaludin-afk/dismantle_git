@@ -396,6 +396,7 @@ class ImportService
             'asset'    => DB::table('asset_clean')->count(),
             'workinfo' => DB::table('workinfo_clean')->count(),
             'manual'   => DB::table('tracker_manual_raw')->count(),
+            'tracker'  => DB::table('tracker')->count(),
         ];
     }
 }
