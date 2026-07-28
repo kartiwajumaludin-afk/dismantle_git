@@ -3,11 +3,14 @@ import { usePage, router } from '@inertiajs/react';
 
 // Shell UI Approve: sidebar icon (kiri) + RGB line vertikal, header atas,
 // RGB line horizontal, dan left panel opsional (dipakai buat form
-// Create User / upload dkk) yang bisa di-collapse.
+// Create User / upload / Quick Filters dkk) yang bisa di-collapse.
 //
 // NAV_ITEMS masih statis (daftar manual) — nanti diganti dinamis begitu
 // tabel menus/submenus & assignment per-user dipakai buat navigasi
 // beneran (baru kepakai kalau menu access sungguhan sudah di-enforce).
+// Ke depannya ini juga akan dipecah jadi menu-bar + submenu-tab (sesuai
+// mockup UI Approve), bukan flat icon kayak sekarang — nunggu modul
+// Dashboard/BoQ/dst mulai numpuk baru direstruktur.
 //
 // Urutan modul lengkap (dari Kang Jawil, jadi acuan urutan icon ke depannya):
 // 1. Dismantle Asset Write-Off (Tracker, Asset View, Workinfo View,
@@ -21,8 +24,11 @@ import { usePage, router } from '@inertiajs/react';
 // 7. User Guide
 // 8. User Management — SELALU PALING BAWAH
 const NAV_ITEMS = [
-    { key: 'import', icon: 'file-import', label: 'Import CSV',      routeName: 'import.index' },
-    { key: 'users',  icon: 'users-cog',   label: 'User Management', routeName: 'users.index' },
+    { key: 'tracker',  icon: 'satellite-dish', label: 'Tracker',        routeName: 'tracker.index' },
+    { key: 'asset',    icon: 'box',            label: 'Asset View',     routeName: 'tracker.asset' },
+    { key: 'workinfo', icon: 'clipboard-list', label: 'Workinfo View',  routeName: 'tracker.workinfo' },
+    { key: 'import',   icon: 'file-import',    label: 'Import CSV',     routeName: 'import.index' },
+    { key: 'users',    icon: 'users-cog',      label: 'User Management', routeName: 'users.index' },
 ];
 
 export default function AppLayout({ children, leftPanel, activeKey }) {
