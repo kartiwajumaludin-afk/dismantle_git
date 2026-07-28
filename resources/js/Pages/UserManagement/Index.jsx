@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
+import AppLayout from '@/Layouts/AppLayout';
 
 export default function Index({ users, roles }) {
     const { flash } = usePage().props;
@@ -24,116 +25,118 @@ export default function Index({ users, roles }) {
     }, [users, tab, roleFilter, search]);
 
     return (
-        <div style={S.page}>
-            {flash?.success && (
-                <div style={S.flashSuccess}>
-                    <i className="fas fa-check-circle" /> {flash.success}
+        <AppLayout activeIcon="users-cog">
+            <div style={S.page}>
+                {flash?.success && (
+                    <div style={S.flashSuccess}>
+                        <i className="fas fa-check-circle" /> {flash.success}
+                    </div>
+                )}
+                {flash?.error && (
+                    <div style={S.flashError}>
+                        <i className="fas fa-times-circle" /> {flash.error}
+                    </div>
+                )}
+
+                <div style={S.header}>
+                    <h1 style={S.title}>User Management</h1>
+                    <p style={S.subtitle}>Kelola akses user ke Web dan Field Team (MobApp)</p>
                 </div>
-            )}
-            {flash?.error && (
-                <div style={S.flashError}>
-                    <i className="fas fa-times-circle" /> {flash.error}
+
+                <div style={S.tabBar}>
+                    <button
+                        style={{ ...S.tab, ...(tab === 'web' ? S.tabActive : {}) }}
+                        onClick={() => setTab('web')}
+                    >
+                        <i className="fas fa-desktop" /> Web
+                    </button>
+                    <button
+                        style={{ ...S.tab, ...(tab === 'mobapp' ? S.tabActive : {}) }}
+                        onClick={() => setTab('mobapp')}
+                    >
+                        <i className="fas fa-mobile-screen-button" /> Field Team (Mobile App)
+                    </button>
                 </div>
-            )}
 
-            <div style={S.header}>
-                <h1 style={S.title}>User Management</h1>
-                <p style={S.subtitle}>Kelola akses user ke Web dan Field Team (MobApp)</p>
-            </div>
-
-            <div style={S.tabBar}>
-                <button
-                    style={{ ...S.tab, ...(tab === 'web' ? S.tabActive : {}) }}
-                    onClick={() => setTab('web')}
-                >
-                    <i className="fas fa-desktop" /> Web
-                </button>
-                <button
-                    style={{ ...S.tab, ...(tab === 'mobapp' ? S.tabActive : {}) }}
-                    onClick={() => setTab('mobapp')}
-                >
-                    <i className="fas fa-mobile-screen-button" /> Field Team (Mobile App)
-                </button>
-            </div>
-
-            <div style={S.toolbar}>
-                <input
-                    type="search"
-                    placeholder="Cari username / nama / email..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={S.searchInput}
-                />
-                <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    style={S.roleSelect}
-                >
-                    <option value="">Semua Role</option>
-                    {roles.map((r) => (
-                        <option key={r} value={r}>{r}</option>
-                    ))}
-                </select>
-                <button style={S.btnAdd} onClick={() => setShowCreate(true)}>
-                    <i className="fas fa-plus" /> Tambah Staff
-                </button>
-            </div>
-
-            <div style={S.tableWrap}>
-                <table style={S.table}>
-                    <thead>
-                        <tr>
-                            <th style={S.th}>#</th>
-                            <th style={S.th}>Full Name</th>
-                            <th style={S.th}>Username</th>
-                            <th style={S.th}>Email</th>
-                            <th style={S.th}>No HP</th>
-                            <th style={S.th}>Role</th>
-                            <th style={S.th}>Status</th>
-                            <th style={S.th}>Periode Aktif</th>
-                            <th style={S.th}>Last Login</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 && (
-                            <tr>
-                                <td colSpan={9} style={S.emptyCell}>
-                                    Belum ada user di tab ini.
-                                </td>
-                            </tr>
-                        )}
-                        {filtered.map((u, i) => (
-                            <tr key={u.id}>
-                                <td style={S.td}>{i + 1}</td>
-                                <td style={S.td}>{u.full_name}</td>
-                                <td style={{ ...S.td, color: '#00b4d8' }}>{u.username}</td>
-                                <td style={S.td}>{u.email}</td>
-                                <td style={S.td}>{u.phone || '-'}</td>
-                                <td style={S.td}>
-                                    <span style={S.roleBadge}>{u.role || '-'}</span>
-                                </td>
-                                <td style={S.td}>
-                                    <span style={u.is_active ? S.statusActive : S.statusInactive}>
-                                        {u.is_active ? 'Active' : 'Inactive'}
-                                    </span>
-                                </td>
-                                <td style={S.td}>
-                                    {u.active_from ? `${u.active_from} ~ ${u.active_until || '-'}` : '-'}
-                                </td>
-                                <td style={S.td}>{u.last_login || '-'}</td>
-                            </tr>
+                <div style={S.toolbar}>
+                    <input
+                        type="search"
+                        placeholder="Cari username / nama / email..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        style={S.searchInput}
+                    />
+                    <select
+                        value={roleFilter}
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        style={S.roleSelect}
+                    >
+                        <option value="">Semua Role</option>
+                        {roles.map((r) => (
+                            <option key={r} value={r}>{r}</option>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                    </select>
+                    <button style={S.btnAdd} onClick={() => setShowCreate(true)}>
+                        <i className="fas fa-plus" /> Tambah Staff
+                    </button>
+                </div>
 
-            {showCreate && (
-                <CreateUserModal
-                    roles={roles}
-                    onClose={() => setShowCreate(false)}
-                />
-            )}
-        </div>
+                <div style={S.tableWrap}>
+                    <table style={S.table}>
+                        <thead>
+                            <tr>
+                                <th style={S.th}>#</th>
+                                <th style={S.th}>Full Name</th>
+                                <th style={S.th}>Username</th>
+                                <th style={S.th}>Email</th>
+                                <th style={S.th}>No HP</th>
+                                <th style={S.th}>Role</th>
+                                <th style={S.th}>Status</th>
+                                <th style={S.th}>Periode Aktif</th>
+                                <th style={S.th}>Last Login</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.length === 0 && (
+                                <tr>
+                                    <td colSpan={9} style={S.emptyCell}>
+                                        Belum ada user di tab ini.
+                                    </td>
+                                </tr>
+                            )}
+                            {filtered.map((u, i) => (
+                                <tr key={u.id}>
+                                    <td style={S.td}>{i + 1}</td>
+                                    <td style={S.td}>{u.full_name}</td>
+                                    <td style={{ ...S.td, color: '#00b4d8' }}>{u.username}</td>
+                                    <td style={S.td}>{u.email}</td>
+                                    <td style={S.td}>{u.phone || '-'}</td>
+                                    <td style={S.td}>
+                                        <span style={S.roleBadge}>{u.role || '-'}</span>
+                                    </td>
+                                    <td style={S.td}>
+                                        <span style={u.is_active ? S.statusActive : S.statusInactive}>
+                                            {u.is_active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td style={S.td}>
+                                        {u.active_from ? `${u.active_from} ~ ${u.active_until || '-'}` : '-'}
+                                    </td>
+                                    <td style={S.td}>{u.last_login || '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {showCreate && (
+                    <CreateUserModal
+                        roles={roles}
+                        onClose={() => setShowCreate(false)}
+                    />
+                )}
+            </div>
+        </AppLayout>
     );
 }
 
@@ -228,8 +231,7 @@ function Field({ label, error, children }) {
 
 const S = {
     page: {
-        minHeight: '100vh', background: '#0a0e14', color: '#e6edf3',
-        fontFamily: "'IBM Plex Sans','Segoe UI',sans-serif", padding: '32px',
+        color: '#e6edf3', fontFamily: "'IBM Plex Sans','Segoe UI',sans-serif", padding: '32px',
     },
     header: { marginBottom: '24px' },
     title: { fontSize: '1.6rem', fontWeight: 800, color: '#e6edf3' },
