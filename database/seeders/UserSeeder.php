@@ -19,8 +19,11 @@ class UserSeeder extends Seeder
                 'email'                => 'superadmin@dismantle.test',
                 'password'             => Hash::make('dismantle@2026'),
                 'is_active'            => true,
-                'active_from'          => now(),
-                'active_until'         => now()->addYears(10),
+                // Sengaja null, bukan diisi tanggal — kolom ini nullable
+                // dan isActiveNow() cuma cek periode kalau ada isinya.
+                // Superadmin jangan pernah bisa ke-lock gara-gara periode habis.
+                'active_from'          => null,
+                'active_until'         => null,
                 'must_change_password' => false,
                 'can_access_web'       => true,
                 'can_access_mobapp'    => true,
