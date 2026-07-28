@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserManagementService
 {
@@ -39,10 +40,27 @@ class UserManagementService
                      ->withQueryString();
     }
 
-    public function createUser(array $data): User
+    /**
+     * Bikin password sementara yang random (bukan nilai tetap).
+     * Cuma ditampilkan SEKALI ke admin lewat flash message pas dibuat/direset —
+     * nggak pernah disimpan/dicatat di tempat lain selain di-hash di kolom password.
+     * Kalau admin/user lupa, tinggal panggil resetPassword() lagi, bukan cari
+     * password lama.
+     */
+    private function generateTempPassword(): string
+    {
+        return Str::password(10, letters: true, numbers: true, symbols: false, spaces: false);
+    }
+
+    /**
+     * @return array{user: User, temp_password: string}
+     */
+    public function createUser(array $data): array
     {
         /** @var \App\Models\User|null $currentUser */
         $currentUser = Auth::user();
+
+        $tempPassword = $this->generateTempPassword();
 
         $user = User::create([
             'full_name'            => $data['full_name'],
@@ -50,7 +68,7 @@ class UserManagementService
             'name'                 => $data['full_name'],
             'email'                => $data['email'],
             'phone'                => $data['phone'] ?? null,
-            'password'             => Hash::make($data['password'] ?? 'dismantle@2026'),
+            'password'             => Hash::make($tempPassword),
             'is_active'            => true,
             // Pakai ?: (bukan ??) supaya string kosong dari input date yang
             // dikosongkan ikut dianggap null, bukan disimpan sebagai ''.
@@ -66,7 +84,7 @@ class UserManagementService
         $this->syncRegions($user, $data['regions'] ?? []);
         $this->syncMenus($user, $data['menus'] ?? [], $data['submenus'] ?? []);
 
-        return $user;
+        return ['user' => $user, 'temp_password' => $tempPassword];
     }
 
     public function updateUser(User $user, array $data): User
@@ -90,12 +108,20 @@ class UserManagementService
         return $user;
     }
 
-    public function resetPassword(User $user): void
+    /**
+     * Reset ke password random baru — ini SATU-SATUNYA cara "lupa password",
+     * bukan lihat/cari password lama (yang memang nggak pernah disimpan plain).
+     */
+    public function resetPassword(User $user): string
     {
+        $tempPassword = $this->generateTempPassword();
+
         $user->update([
-            'password'             => Hash::make('dismantle@2026'),
+            'password'             => Hash::make($tempPassword),
             'must_change_password' => true,
         ]);
+
+        return $tempPassword;
     }
 
     private function syncRegions(User $user, array $regionIds): void
