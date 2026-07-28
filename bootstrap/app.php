@@ -16,7 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'active.user' => \App\Http\Middleware\EnsureUserIsActive::class,
+            'active.user'        => \App\Http\Middleware\EnsureUserIsActive::class,
+            // Alias bawaan Spatie Permission — nggak otomatis kedaftar,
+            // harus didaftarkan manual di sini.
+            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
