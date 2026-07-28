@@ -2,6 +2,7 @@
 // path: routes/web.php
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Import\ImportController;
+use App\Http\Controllers\Tracker\TrackerController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +55,19 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     Route::post('/import/verify',  [ImportController::class, 'verify'])->name('import.verify');
     Route::post('/import/stream',  [ImportController::class, 'uploadAndStream'])->name('import.stream');
     Route::post('/import/process', [ImportController::class, 'process'])->name('import.process');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// TRACKER / ASSET VIEW / WORKINFO VIEW
+// ══════════════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::get('/tracker',                  [TrackerController::class, 'index'])->name('tracker.index');
+    Route::get('/tracker/asset',            [TrackerController::class, 'asset'])->name('tracker.asset');
+    Route::get('/tracker/workinfo',         [TrackerController::class, 'workinfo'])->name('tracker.workinfo');
+    Route::get('/tracker/export',           [TrackerController::class, 'export'])->name('tracker.export');
+    Route::get('/tracker/manual',           [TrackerController::class, 'manualGet'])->name('tracker.manual.get');
+    Route::post('/tracker/manual',          [TrackerController::class, 'manualStore'])->name('tracker.manual.store');
+    Route::delete('/tracker/manual/{ticketNumber}', [TrackerController::class, 'manualDestroy'])->name('tracker.manual.destroy');
 });
 
 // Redirect root ke login/users
