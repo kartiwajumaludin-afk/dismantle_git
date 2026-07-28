@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 
@@ -217,8 +217,9 @@ function LeftPanel({ filterOptions, auth }) {
         setRegions(next);
         applyFilters({ regions: next });
     };
-    const toggleMulti = (key, val) => {
-        setFilters(prev => ({ ...prev, [key]: prev[key].includes(val) ? prev[key].filter(v => v !== val) : [...prev[key], val] }));
+    const setMulti = (key, vals) => {
+        setFilters(prev => ({ ...prev, [key]: vals }));
+        applyFilters({ [key]: vals });
     };
 
     return (
@@ -235,14 +236,26 @@ function LeftPanel({ filterOptions, auth }) {
                     <div style={F.grid3}>
                         <button onClick={() => toggleRegion('all')} style={{ ...F.chip, gridColumn: '1/-1', ...(regions.includes('all') ? F.chipActive : {}) }}>All Region</button>
                         {REG_LIST.map(r => (
-                            <button key={r} onClick={() => toggleRegion(r)} style={{ ...F.chip, ...(regions.includes(r) ? F.chipActive : {}) }}>{r}</button>
+                            <button key={r} onClick={() => toggleRegion(r)} style={{ ...F.chip, ...(regions.includes(r) ? F.chipActive : {}) }}>{r.replace('REG', 'Region ')}</button>
                         ))}
                     </div>
                 </div>
-                <MultiField label="TICKET STATUS" options={filterOptions?.statuses ?? []} selected={filters.ticket_status} onToggle={v => toggleMulti('ticket_status', v)} />
-                <MultiField label="TICKET BATCH" options={filterOptions?.batches ?? []} selected={filters.ticket_batch} onToggle={v => toggleMulti('ticket_batch', v)} />
-                <MultiField label="TICKET SUB TYPE" options={filterOptions?.subTypes ?? []} selected={filters.ticket_sub_type} onToggle={v => toggleMulti('ticket_sub_type', v)} />
-                <MultiField label="NOP" options={filterOptions?.nops ?? []} selected={filters.nop} onToggle={v => toggleMulti('nop', v)} />
+                <div>
+                    <div style={F.label}>TICKET STATUS</div>
+                    <ExcelDropdown label="TICKET STATUS" options={filterOptions?.statuses ?? []} selected={filters.ticket_status} onChange={v => setMulti('ticket_status', v)} />
+                </div>
+                <div>
+                    <div style={F.label}>TICKET BATCH</div>
+                    <ExcelDropdown label="TICKET BATCH" options={filterOptions?.batches ?? []} selected={filters.ticket_batch} onChange={v => setMulti('ticket_batch', v)} />
+                </div>
+                <div>
+                    <div style={F.label}>SUB TYPE</div>
+                    <ExcelDropdown label="SUB TYPE" options={filterOptions?.subTypes ?? []} selected={filters.ticket_sub_type} onChange={v => setMulti('ticket_sub_type', v)} />
+                </div>
+                <div>
+                    <div style={F.label}>NOP</div>
+                    <ExcelDropdown label="NOP" options={filterOptions?.nops ?? []} selected={filters.nop} onChange={v => setMulti('nop', v)} />
+                </div>
                 <div>
                     <div style={F.label}>DATE RANGE (Created)</div>
                     <div style={{ display: 'flex', gap: 6 }}>
@@ -260,19 +273,82 @@ function LeftPanel({ filterOptions, auth }) {
     );
 }
 
-function MultiField({ label, options, selected, onToggle }) {
-    if (!options.length) return null;
+/* ─── EXCEL-STYLE DROPDOWN — search + checklist + Apply/Cancel ─── */
+function ExcelDropdown({ label, options, selected, onChange }) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const [allChecked, setAllChecked] = useState(selected.length === 0);
+    const [temp, setTemp] = useState(selected);
+    const ref = useRef();
+
+    useEffect(() => { setAllChecked(selected.length === 0); setTemp(selected); }, [selected.join(',')]);
+    useEffect(() => {
+        const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
+    }, []);
+
+    const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+    const isIndeter = !allChecked && temp.length > 0 && temp.length < options.length;
+
+    const toggleAll = () => {
+        if (allChecked) { setAllChecked(false); setTemp([]); }
+        else { setAllChecked(true); setTemp([]); }
+    };
+    const toggleItem = (v) => {
+        if (allChecked) {
+            const next = options.filter(x => x !== v);
+            setAllChecked(false); setTemp(next);
+        } else {
+            const next = temp.includes(v) ? temp.filter(x => x !== v) : [...temp, v];
+            if (next.length === options.length) { setAllChecked(true); setTemp([]); }
+            else { setAllChecked(false); setTemp(next); }
+        }
+    };
+    const apply = () => { onChange(allChecked ? [] : temp); setOpen(false); setSearch(''); };
+    const cancel = () => { setAllChecked(selected.length === 0); setTemp(selected); setOpen(false); setSearch(''); };
+    const display = allChecked || (temp.length === 0 && !allChecked && selected.length === 0)
+        ? `All ${label}` : temp.length === 0 && !allChecked ? 'None selected'
+        : temp.length === 1 ? temp[0] : `${temp.length} dipilih`;
+    const hasFilter = selected.length > 0;
+
     return (
-        <div>
-            <div style={F.label}>{label}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 140, overflowY: 'auto' }} className="left-panel-scroll">
-                {options.map(opt => (
-                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '.8rem', color: selected.includes(opt) ? '#e6edf3' : '#8b949e', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={selected.includes(opt)} onChange={() => onToggle(opt)} style={{ accentColor: '#00b4d8' }} />
-                        {opt}
-                    </label>
-                ))}
-            </div>
+        <div ref={ref} style={{ position: 'relative' }}>
+            <button onClick={() => setOpen(!open)} style={{
+                ...F.input, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+                color: hasFilter ? '#00b4d8' : '#e6edf3', borderColor: hasFilter ? '#00b4d8' : '#2a3140',
+            }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{display}</span>
+                <i className={`fas fa-chevron-${open ? 'up' : 'down'}`} style={{ fontSize: '.65rem', color: '#6e7681', flexShrink: 0, marginLeft: 6 }} />
+            </button>
+            {open && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 9999, background: '#1c2029', border: '1px solid #2a3140', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,.5)', display: 'flex', flexDirection: 'column', maxHeight: 300 }}>
+                    <div style={{ padding: 8, borderBottom: '1px solid #2a3140', flexShrink: 0 }}>
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari..."
+                               style={{ ...F.input, padding: '6px 10px', fontSize: '.8rem' }} autoFocus />
+                    </div>
+                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                        <label style={EX.item}>
+                            <input type="checkbox" checked={allChecked}
+                                   ref={el => { if (el) el.indeterminate = isIndeter; }}
+                                   onChange={toggleAll} style={{ accentColor: '#00b4d8' }} />
+                            <span style={{ color: '#e6edf3', fontWeight: 700 }}>All {label}</span>
+                        </label>
+                        <div style={{ height: 1, background: '#2a3140', margin: '2px 0' }} />
+                        {filtered.map(opt => (
+                            <label key={opt} style={EX.item}>
+                                <input type="checkbox" checked={allChecked || temp.includes(opt)}
+                                       onChange={() => toggleItem(opt)} style={{ accentColor: '#00b4d8' }} />
+                                <span style={{ color: '#e6edf3' }}>{opt}</span>
+                            </label>
+                        ))}
+                    </div>
+                    <div style={{ padding: 8, borderTop: '1px solid #2a3140', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
+                        <button onClick={cancel} style={EX.btnCancel}>Cancel</button>
+                        <button onClick={apply} style={EX.btnApply}>Apply</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -406,8 +482,13 @@ const F = {
     grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 },
     chip: { padding: '7px 4px', borderRadius: 6, fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,.04)', color: '#8b949e', border: '1px solid #2a3140' },
     chipActive: { background: '#00b4d8', color: '#fff', border: '1px solid #00b4d8' },
-    input: { flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,.04)', border: '1px solid #2a3140', borderRadius: 7, color: '#e6edf3', fontSize: '.82rem' },
+    input: { width: '100%', boxSizing: 'border-box', padding: '8px 10px', background: '#1c2029', border: '1px solid #2a3140', borderRadius: 7, color: '#e6edf3', fontSize: '.82rem', outline: 'none' },
     btnApply: { padding: '10px 0', background: 'linear-gradient(135deg,#00b4d8,#0096c7)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer' },
+};
+const EX = {
+    item: { display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', fontSize: '.83rem', userSelect: 'none' },
+    btnApply: { padding: '6px 16px', borderRadius: 6, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: '#00b4d8', color: '#fff' },
+    btnCancel: { padding: '6px 14px', borderRadius: 6, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', border: '1px solid #2a3140', background: 'rgba(255,255,255,.06)', color: '#e6edf3' },
 };
 const M = {
     overlay: { position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
