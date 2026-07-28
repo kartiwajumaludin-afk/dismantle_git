@@ -187,18 +187,19 @@ const S = {
         position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
         background: '#00b4d8', borderRadius: '0 3px 3px 0', boxShadow: '0 0 8px #00b4d8',
     },
-    // Nonaktif: TETAP kelihatan (box + border jelas), cuma warnanya lebih
-    // muted dari yang aktif.
+    // Persis sistem live: TANPA border sama sekali di icon box, apapun
+    // statenya. Beda aktif/hover/nonaktif murni dari warna background —
+    // border tipis-lah yang kemarin keliatan kayak "outline nyangkut".
     iconBox: {
-        width: '44px', height: '44px', borderRadius: '10px',
-        border: '1px solid #2a3140', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.1rem', color: '#8b949e', background: '#1c2029',
+        width: '44px', height: '44px', borderRadius: '10px', border: 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '1.1rem', color: '#8b949e', background: '#212631', transition: '0.2s',
     },
     iconBoxHover: {
-        color: '#e6edf3', borderColor: '#3a4255', background: '#232935',
+        color: '#fff', background: '#1c2029',
     },
     iconBoxActive: {
-        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff', borderColor: '#00b4d8',
+        background: 'linear-gradient(135deg,#00b4d8,#0096c7)', color: '#fff',
         boxShadow: '0 4px 14px rgba(0,180,216,.45)',
     },
     iconLabel: {
