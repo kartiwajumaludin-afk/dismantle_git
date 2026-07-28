@@ -50,10 +50,11 @@ const CARDS = [
 ];
 
 const STATS_CONFIG = [
-    { key: 'ticket',   label: 'Ticket Clean',  color: '#00b4d8' },
-    { key: 'asset',    label: 'Asset Clean',   color: '#06d6a0' },
+    { key: 'ticket',   label: 'Ticket Clean',   color: '#00b4d8' },
+    { key: 'asset',    label: 'Asset Clean',    color: '#06d6a0' },
     { key: 'workinfo', label: 'Workinfo Clean', color: '#9d4edd' },
-    { key: 'manual',   label: 'Manual Raw',    color: '#ffd43b' },
+    { key: 'manual',   label: 'Manual Raw',     color: '#ffd43b' },
+    { key: 'tracker',  label: 'Tracker',        color: '#f72585' },
 ];
 
 function initCardState() {
@@ -74,6 +75,8 @@ export default function ImportIndex({ stats }) {
         CARDS.forEach((c) => { init[c.type] = initCardState(); });
         return init;
     });
+    const [engineStatus, setEngineStatus]   = useState('');
+    const [engineLoading, setEngineLoading] = useState(false);
 
     const activeXHR = useRef({});
     const cardsRef  = useRef(cards);
@@ -267,6 +270,39 @@ export default function ImportIndex({ stats }) {
         setCards((prev) => ({ ...prev, [type]: initCardState() }));
     }, []);
 
+    // ── MASTER BUSINESS ENGINE ──────────────────────────────────
+    // Dipanggil manual (bukan otomatis tiap import) — tunggu semua file
+    // (ticket/asset/workinfo/manual) selesai diupload dulu, baru dijalankan
+    // sekali biar hemat waktu proses.
+    const runEngine = async () => {
+        setEngineLoading(true);
+        setEngineStatus('Memproses...');
+        try {
+            const res = await fetch(route('import.process'), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    Accept: 'application/json',
+                },
+            });
+            const json = await res.json();
+            if (json.success) {
+                setEngineStatus(`Selesai: ${json.message} | Total tracker: ${(json.total_tracker || 0).toLocaleString()}`);
+                setTimeout(() => {
+                    setEngineStatus('');
+                    setEngineLoading(false);
+                    router.reload({ only: ['stats'] });
+                }, 3000);
+            } else {
+                setEngineStatus('Error: ' + json.message);
+                setEngineLoading(false);
+            }
+        } catch (e) {
+            setEngineStatus('Terjadi kesalahan saat menjalankan Master Engine.');
+            setEngineLoading(false);
+        }
+    };
+
     return (
         <AppLayout activeKey="import">
             <div style={S.wrap}>
@@ -285,8 +321,7 @@ export default function ImportIndex({ stats }) {
                         Import CSV
                     </h2>
                     <p style={S.subtitle}>
-                        Upload ke tabel staging (ticket_clean, asset_clean, workinfo_clean, tracker_manual_raw).
-                        Gabung ke tabel <code>tracker</code> menyusul di modul Tracker.
+                        Upload ke tabel staging, lalu jalankan Master Business Engine buat gabungin semuanya ke tabel <code>tracker</code>.
                     </p>
                 </div>
 
@@ -302,6 +337,22 @@ export default function ImportIndex({ stats }) {
                             onReset={onReset}
                         />
                     ))}
+                </div>
+
+                <div className="rgb-card-wrap">
+                    <div style={S.engineCard}>
+                        <i className="fas fa-bolt" style={{ color: '#ffd43b', fontSize: '1.4rem' }} />
+                        <h3 style={S.engineTitle}>MASTER BUSINESS ENGINE</h3>
+                        <p style={S.engineDesc}>
+                            Proses data dari tabel *_clean ke TRACKER.<br />
+                            Jalankan setelah semua import selesai.
+                        </p>
+                        <button style={S.engineBtn} onClick={runEngine} disabled={engineLoading}>
+                            <i className={`fas ${engineLoading ? 'fa-spinner fa-spin' : 'fa-play'}`} />
+                            {engineLoading ? 'Memproses...' : 'Start Import Process'}
+                        </button>
+                        {engineStatus && <div style={S.engineStatus}>{engineStatus}</div>}
+                    </div>
                 </div>
             </div>
         </AppLayout>
@@ -406,7 +457,7 @@ const S = {
     title: { fontSize: '1.3rem', fontWeight: 800, color: '#e6edf3', display: 'flex', alignItems: 'center' },
     subtitle: { fontSize: '.82rem', color: '#8b949e', marginTop: '6px' },
     grid: {
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '18px', marginBottom: '24px',
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '18px', marginBottom: '20px',
     },
     card: {
         background: '#212631', borderRadius: '11px',
@@ -446,4 +497,17 @@ const S = {
     },
     statValue: { fontSize: '1rem', fontWeight: 800 },
     statLabel: { fontSize: '.72rem', color: '#8b949e' },
+    engineCard: {
+        background: '#212631', borderRadius: '11px', padding: '28px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center',
+    },
+    engineTitle: { fontSize: '1rem', fontWeight: 800, color: '#e6edf3', letterSpacing: '.5px', margin: 0 },
+    engineDesc: { fontSize: '.8rem', color: '#8b949e', margin: 0, lineHeight: 1.5 },
+    engineBtn: {
+        marginTop: '10px', padding: '12px 32px', borderRadius: '9px', border: 'none',
+        background: 'linear-gradient(135deg,#9d4edd,#7b2fbe)', color: '#fff',
+        fontSize: '.9rem', fontWeight: 800, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: '8px',
+    },
+    engineStatus: { marginTop: '10px', fontSize: '.82rem', color: '#e6edf3' },
 };
