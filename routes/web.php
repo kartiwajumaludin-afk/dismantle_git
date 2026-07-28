@@ -29,11 +29,11 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 // ══════════════════════════════════════════════════════════════════════
-// MODUL — semua butuh login + akun aktif
+// USER MANAGEMENT — cuma super_admin & admin. Role lain (regional_manager,
+// vendor, view, logistic) ditolak 403 walau ketik URL /users langsung,
+// bukan cuma disembunyikan dari sidebar.
 // ══════════════════════════════════════════════════════════════════════
-Route::middleware(['auth', 'active.user'])->group(function () {
-
-    // -- User Management --
+Route::middleware(['auth', 'active.user', 'role:super_admin|admin'])->group(function () {
     Route::get('/users',                         [UserManagementController::class, 'index'])->name('users.index');
     Route::post('/users',                        [UserManagementController::class, 'store'])->name('users.store');
     Route::get('/users/{user}',                  [UserManagementController::class, 'show'])->name('users.show');
