@@ -16,6 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
     'username', 'full_name', 'name', 'email', 'phone', 'password',
     'is_active', 'active_from', 'active_until', 'last_login', 'last_seen_at',
     'must_change_password', 'created_by', 'fcm_token',
+    'can_access_web', 'can_access_mobapp',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -39,6 +40,8 @@ class User extends Authenticatable
             'last_login'           => 'datetime',
             'last_seen_at'         => 'datetime',
             'must_change_password' => 'boolean',
+            'can_access_web'       => 'boolean',
+            'can_access_mobapp'    => 'boolean',
         ];
     }
 
