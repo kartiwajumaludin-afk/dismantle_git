@@ -67,6 +67,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
                                 style={S.navIconWrap}
                                 onMouseEnter={() => setHoveredMenu(menu.id)}
                                 onMouseLeave={() => setHoveredMenu(null)}
+                                onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => goToMenu(menu)}
                             >
                                 {isActive && <div style={S.activeBar} />}
@@ -176,9 +177,13 @@ const S = {
         background: 'linear-gradient(180deg,#141821 0%,#1c2029 100%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'space-between', padding: '20px 0',
+        userSelect: 'none', WebkitUserSelect: 'none',
     },
     navIcons: { display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' },
-    navIconWrap: { position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center' },
+    navIconWrap: {
+        position: 'relative', cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center',
+        userSelect: 'none', WebkitUserSelect: 'none', WebkitTapHighlightColor: 'transparent', outline: 'none',
+    },
     activeBar: {
         position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '3px',
         background: '#00b4d8', borderRadius: '0 3px 3px 0', boxShadow: '0 0 8px #00b4d8',
@@ -201,6 +206,7 @@ const S = {
         position: 'absolute', left: 'calc(100% + 12px)', top: '50%', transform: 'translateY(-50%)',
         background: '#212631', color: '#e6edf3', padding: '6px 12px', borderRadius: '6px',
         fontSize: '.8rem', whiteSpace: 'nowrap', border: '1px solid #2a3140', zIndex: 1001,
+        userSelect: 'none', pointerEvents: 'none',
     },
     logoutIcon: {
         width: '44px', height: '44px', borderRadius: '10px',
