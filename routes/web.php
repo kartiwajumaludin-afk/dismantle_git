@@ -4,7 +4,6 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Import\ImportController;
 use App\Http\Controllers\Tracker\TrackerController;
 use App\Http\Controllers\UserManagementController;
-use App\Models\Menu;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,60 +27,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout',          [AuthController::class, 'logout'])->name('logout');
 });
 
-/**
- * Cari route pertama yang beneran BOLEH & BISA diakses user ini, ngikutin
- * urutan Modul/Sub Modul — dipakai buat /dashboard dan / (root), supaya
- * user selain super_admin/admin nggak ke-lempar ke User Management (yang
- * emang dikunci buat mereka, bikin 403).
- */
-function firstAccessibleRoute(): string
-{
-    $user = auth()->user();
-
-    $menus = Menu::where('is_active', true)
-        ->with(['submenus' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
-        ->orderBy('sort_order')
-        ->get();
-
-    if (!$user->hasRole('super_admin')) {
-        $assignedMenuIds    = $user->menus()->pluck('menus.id')->all();
-        $assignedSubmenuIds = $user->submenus()->pluck('submenus.id')->all();
-
-        $menus = $menus
-            ->map(function ($menu) use ($assignedSubmenuIds) {
-                $menu->setRelation(
-                    'submenus',
-                    $menu->submenus->filter(fn ($s) => in_array($s->id, $assignedSubmenuIds))->values()
-                );
-                return $menu;
-            })
-            ->filter(fn ($menu) => $menu->submenus->isNotEmpty() || in_array($menu->id, $assignedMenuIds))
-            ->values();
-    }
-
-    foreach ($menus as $menu) {
-        if ($menu->submenus->isNotEmpty()) {
-            foreach ($menu->submenus as $sub) {
-                if ($sub->route_name && Route::has($sub->route_name)) {
-                    return $sub->route_name;
-                }
-            }
-        } elseif ($menu->route_name && Route::has($menu->route_name)) {
-            return $menu->route_name;
-        }
-    }
-
-    // User belum di-assign menu/submenu apapun — daripada 403 membingungkan,
-    // arahkan ke halaman ganti password (selalu boleh diakses siapa saja).
-    return 'password.change';
-}
-
 // Alias 'dashboard' — dipakai internal oleh middleware guest bawaan Laravel
 // buat redirect kalau user yang sudah login coba buka /login lagi. JANGAN
 // hardcode ke users.index — itu dikunci super_admin/admin doang, bikin role
-// lain kena 403 tiap login.
+// lain kena 403 tiap login. Pakai User::firstAccessibleRouteName().
 Route::get('/dashboard', function () {
-    return redirect()->route(firstAccessibleRoute());
+    return redirect()->route(auth()->user()->firstAccessibleRouteName());
 })->middleware('auth')->name('dashboard');
 
 // ══════════════════════════════════════════════════════════════════════
@@ -180,5 +131,5 @@ Route::get('/', function () {
     if (!auth()->check()) {
         return redirect()->route('login');
     }
-    return redirect()->route(firstAccessibleRoute());
+    return redirect()->route(auth()->user()->firstAccessibleRouteName());
 });
