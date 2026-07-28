@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Import;
 
 use App\Http\Controllers\Controller;
 use App\Services\Import\ImportService;
+use App\Services\Import\TrackerEngineService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ImportController extends Controller
 {
-    public function __construct(private ImportService $service)
-    {
+    public function __construct(
+        private ImportService $service,
+        private TrackerEngineService $engine,
+    ) {
     }
 
     public function index()
@@ -147,5 +150,18 @@ class ImportController extends Controller
             'X-Accel-Buffering' => 'no',
             'Connection'        => 'keep-alive',
         ]);
+    }
+
+    /**
+     * Master Business Engine — gabungkan tabel *_clean ke tabel tracker.
+     * Dipanggil manual (bukan otomatis tiap import) supaya bisa nunggu semua
+     * file (ticket/asset/workinfo/manual) selesai diupload dulu baru dijalankan
+     * sekali, hemat waktu proses.
+     */
+    public function process()
+    {
+        set_time_limit(0);
+
+        return response()->json($this->engine->process());
     }
 }
