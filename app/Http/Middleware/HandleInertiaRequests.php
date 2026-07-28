@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -37,6 +38,15 @@ class HandleInertiaRequests extends Middleware
                     'regions'   => $user->regions->map(fn ($r) => ['code' => $r->code])->values(),
                 ] : null,
             ],
+            // Struktur Modul + Sub Modul buat sidebar & top-bar — sengaja
+            // di-share global (bukan per-user) karena enforcement akses
+            // menu/submenu belum dipasang; semua user yang login lihat
+            // struktur yang sama dulu.
+            'menus' => $user ? fn () => Menu::where('is_active', true)
+                ->with(['submenus' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+                ->orderBy('sort_order')
+                ->get(['id', 'menu_key', 'label', 'icon', 'route_name', 'sort_order'])
+                : [],
             'flash' => [
                 'success'     => fn () => $request->session()->get('success'),
                 'error'       => fn () => $request->session()->get('error'),
