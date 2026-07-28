@@ -1,63 +1,73 @@
 import { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 
-// Shell UI Approve: sidebar icon (kiri) + RGB line vertikal, header atas,
-// RGB line horizontal, dan left panel opsional (dipakai buat form
-// Create User / upload / Quick Filters dkk) yang bisa di-collapse.
+// Shell UI Approve: sidebar = 1 icon per MODUL (dari tabel `menus`), top bar =
+// judul Modul aktif + tab SUB MODUL-nya (dari tabel `submenus`) — ini yang
+// sempat kebalik kemarin (submodul taruh di sidebar). Sekarang strukturnya
+// benar: sidebar buat pindah Modul, tab atas buat pindah Sub Modul dalam
+// Modul yang sama.
 //
-// NAV_ITEMS masih statis (daftar manual) — nanti diganti dinamis begitu
-// tabel menus/submenus & assignment per-user dipakai buat navigasi
-// beneran (baru kepakai kalau menu access sungguhan sudah di-enforce).
-// Ke depannya ini juga akan dipecah jadi menu-bar + submenu-tab (sesuai
-// mockup UI Approve), bukan flat icon kayak sekarang — nunggu modul
-// Dashboard/BoQ/dst mulai numpuk baru direstruktur.
-//
-// Urutan modul lengkap (dari Kang Jawil, jadi acuan urutan icon ke depannya):
-// 1. Dismantle Asset Write-Off (Tracker, Asset View, Workinfo View,
-//    Daily Activity, Import CSV, Site Map, Mode Tracking)
-// 2. Dashboard (Dashboard Analysis, Interactive Tree, Diagram dan Grafik,
-//    Baseline Forecast)
-// 3. BoQ Calculation (BoQ Calculation, BoQ Summary)
-// 4. Inbound Tracking (Inbound Tracker, Inbound Request, Disposal Asset)
-// 5. KickOff (KOM Site, KOM Org Chart, KOM Project, KOM Slide)
-// 6. Daily Reminder
-// 7. User Guide
-// 8. User Management — SELALU PALING BAWAH
-const NAV_ITEMS = [
-    { key: 'tracker',  icon: 'satellite-dish', label: 'Tracker',        routeName: 'tracker.index' },
-    { key: 'asset',    icon: 'box',            label: 'Asset View',     routeName: 'tracker.asset' },
-    { key: 'workinfo', icon: 'clipboard-list', label: 'Workinfo View',  routeName: 'tracker.workinfo' },
-    { key: 'import',   icon: 'file-import',    label: 'Import CSV',     routeName: 'import.index' },
-    { key: 'users',    icon: 'users-cog',      label: 'User Management', routeName: 'users.index' },
-];
-
-export default function AppLayout({ children, leftPanel, activeKey }) {
-    const { auth } = usePage().props;
-    const [hoveredKey, setHoveredKey] = useState(null);
+// Sub modul yang belum punya halaman/route beneran ditampilkan abu-abu +
+// label "Segera" (bukan link mati) — dicek pakai route().has().
+export default function AppLayout({ children, leftPanel, activeSubmenu }) {
+    const { auth, menus = [] } = usePage().props;
     const [panelOpen, setPanelOpen] = useState(true);
+    const [hoveredMenu, setHoveredMenu] = useState(null);
 
     const handleLogout = () => router.post(route('logout'));
+
+    const isBuilt = (routeName) => {
+        if (!routeName) return false;
+        try {
+            return route().has(routeName);
+        } catch {
+            return false;
+        }
+    };
+
+    // Cari menu (+ submenu, kalau ada) yang lagi aktif berdasarkan key yang
+    // dikirim tiap halaman.
+    let activeMenu = menus[0] ?? null;
+    let activeSub = null;
+    for (const menu of menus) {
+        if (menu.menu_key === activeSubmenu) { activeMenu = menu; break; }
+        const found = menu.submenus?.find((s) => s.submenu_key === activeSubmenu);
+        if (found) { activeMenu = menu; activeSub = found; break; }
+    }
+
+    const goToMenu = (menu) => {
+        if (menu.submenus?.length) {
+            const firstBuilt = menu.submenus.find((s) => isBuilt(s.route_name));
+            if (firstBuilt) router.visit(route(firstBuilt.route_name));
+            return;
+        }
+        if (isBuilt(menu.route_name)) router.visit(route(menu.route_name));
+    };
+
+    const goToSubmenu = (sub) => {
+        if (isBuilt(sub.route_name)) router.visit(route(sub.route_name));
+    };
 
     return (
         <div style={S.root}>
             <nav style={S.sidebar}>
                 <div className="sidebar-rgb-line" />
                 <div style={S.navIcons}>
-                    {NAV_ITEMS.map((item) => (
+                    {menus.map((menu) => (
                         <div
-                            key={item.key}
+                            key={menu.id}
                             style={S.navIconWrap}
-                            onMouseEnter={() => setHoveredKey(item.key)}
-                            onMouseLeave={() => setHoveredKey(null)}
-                            onClick={() => router.visit(route(item.routeName))}
+                            onMouseEnter={() => setHoveredMenu(menu.id)}
+                            onMouseLeave={() => setHoveredMenu(null)}
+                            onClick={() => goToMenu(menu)}
                         >
                             <div style={{
                                 ...S.iconBox,
-                                ...(activeKey === item.key ? S.iconBoxActive : {}),
+                                ...(activeMenu?.id === menu.id ? S.iconBoxActive : {}),
                             }}>
-                                <i className={`fas fa-${item.icon}`} />
+                                <i className={`fas fa-${menu.icon}`} />
                             </div>
-                            {hoveredKey === item.key && <span style={S.iconLabel}>{item.label}</span>}
+                            {hoveredMenu === menu.id && <span style={S.iconLabel}>{menu.label}</span>}
                         </div>
                     ))}
                 </div>
@@ -87,6 +97,40 @@ export default function AppLayout({ children, leftPanel, activeKey }) {
                 </header>
 
                 <div className="rgb-line-full" />
+
+                {activeMenu && (
+                    <div style={S.menuBar}>
+                        <div className="rgb-border" style={S.menuTitle}>
+                            <span>{activeMenu.label}</span>
+                        </div>
+                        <div style={S.submenuBar}>
+                            {(activeMenu.submenus ?? []).map((sub) => {
+                                const built = isBuilt(sub.route_name);
+                                const active = activeSub?.id === sub.id;
+                                return (
+                                    <button
+                                        key={sub.id}
+                                        onClick={() => goToSubmenu(sub)}
+                                        disabled={!built}
+                                        title={built ? sub.label : `${sub.label} — segera hadir`}
+                                        style={{
+                                            ...S.submenuTab,
+                                            opacity: built ? 1 : 0.35,
+                                            cursor: built ? 'pointer' : 'not-allowed',
+                                            background: active ? 'rgba(255,255,255,.08)' : 'transparent',
+                                            border: `1px solid ${active ? (sub.color || '#00b4d8') : 'transparent'}`,
+                                            color: active ? '#e6edf3' : '#8b949e',
+                                        }}
+                                    >
+                                        <i className={`fas fa-${sub.icon}`} style={{ color: sub.color || '#00b4d8' }} />
+                                        <span>{sub.label}</span>
+                                        {!built && <span style={S.soonBadge}>Segera</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 <div style={S.mainArea}>
                     {leftPanel && (
@@ -165,6 +209,28 @@ const S = {
         marginLeft: '8px', width: '30px', height: '30px', borderRadius: '6px',
         background: 'rgba(255,107,107,0.15)', border: '1px solid rgba(255,107,107,0.3)',
         color: '#ff6b6b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    },
+    menuBar: {
+        height: '54px', flexShrink: 0, display: 'flex', alignItems: 'center',
+        background: '#212631', borderBottom: '1px solid #2a3140',
+    },
+    menuTitle: {
+        width: '260px', flexShrink: 0, height: '100%',
+        display: 'flex', alignItems: 'center', padding: '0 20px',
+        fontSize: '.95rem', fontWeight: 700, color: '#e6edf3',
+        background: '#212631', borderRight: '3px solid',
+    },
+    submenuBar: {
+        flex: 1, height: '100%', display: 'flex', gap: '4px',
+        padding: '7px', alignItems: 'stretch', overflowX: 'auto',
+    },
+    submenuTab: {
+        display: 'flex', alignItems: 'center', gap: '7px', padding: '0 14px',
+        borderRadius: '8px', fontSize: '.82rem', fontWeight: 600, whiteSpace: 'nowrap',
+    },
+    soonBadge: {
+        fontSize: '.6rem', background: 'rgba(255,255,255,.08)', padding: '1px 6px',
+        borderRadius: '8px', color: '#6e7681', marginLeft: '4px',
     },
     mainArea: { flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' },
     panelToggle: {
