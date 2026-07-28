@@ -22,6 +22,7 @@ class HandleInertiaRequests extends Middleware
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
+        $user?->loadMissing('regions');
 
         return [
             ...parent::share($request),
@@ -31,6 +32,9 @@ class HandleInertiaRequests extends Middleware
                     'username'  => $user->username,
                     'full_name' => $user->full_name,
                     'role'      => $user->getRoleNames()->first(),
+                    // Dipakai buat scope region non-super_admin (misal di
+                    // Quick Filters Tracker) — cuma kode region, bukan detail.
+                    'regions'   => $user->regions->map(fn ($r) => ['code' => $r->code])->values(),
                 ] : null,
             ],
             'flash' => [
