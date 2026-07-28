@@ -9,6 +9,7 @@ use App\Services\UserManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -55,9 +56,14 @@ class UserManagementController extends Controller
 
         $result = $this->service->createUser($request->all());
 
-        return back()->with('success',
-            "User '{$result['user']->username}' berhasil dibuat. Password sementara: {$result['temp_password']} — catat/informasikan sekarang, tidak akan ditampilkan lagi."
-        );
+        return back()
+            ->with('success', "User '{$result['user']->username}' berhasil dibuat.")
+            ->with('credentials', [
+                'id'       => (string) Str::uuid(),
+                'action'   => 'dibuat',
+                'username' => $result['user']->username,
+                'password' => $result['temp_password'],
+            ]);
     }
 
     public function show(User $user)
@@ -130,9 +136,14 @@ class UserManagementController extends Controller
 
         $tempPassword = $this->service->resetPassword($user);
 
-        return back()->with('success',
-            "Password berhasil direset. Password baru: {$tempPassword} — catat/informasikan sekarang, tidak akan ditampilkan lagi."
-        );
+        return back()
+            ->with('success', 'Password berhasil direset.')
+            ->with('credentials', [
+                'id'       => (string) Str::uuid(),
+                'action'   => 'direset',
+                'username' => $user->username,
+                'password' => $tempPassword,
+            ]);
     }
 
     public function toggleActive(User $user): RedirectResponse
