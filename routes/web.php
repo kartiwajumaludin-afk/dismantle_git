@@ -1,6 +1,7 @@
 <?php
 // path: routes/web.php
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DailyActivity\DailyActivityController;
 use App\Http\Controllers\Import\ImportController;
 use App\Http\Controllers\Tracker\TrackerController;
 use App\Http\Controllers\UserManagementController;
@@ -74,6 +75,26 @@ Route::middleware(['auth', 'active.user'])->group(function () {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+// DAILY ACTIVITY
+// ══════════════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::get('/daily-activity',                [DailyActivityController::class, 'index'])->name('daily.index');
+    Route::post('/daily-activity/populate',       [DailyActivityController::class, 'populate'])->name('daily.populate');
+    Route::post('/daily-activity/truncate',       [DailyActivityController::class, 'truncate'])->name('daily.truncate');
+    Route::post('/daily-activity/sync-status',    [DailyActivityController::class, 'syncStatus'])->name('daily.sync-status');
+    Route::post('/daily-activity/assign',         [DailyActivityController::class, 'assign'])->name('daily.assign');
+    Route::put('/daily-activity/{id}',            [DailyActivityController::class, 'update'])->name('daily.update');
+    Route::post('/daily-activity/{id}/verify',    [DailyActivityController::class, 'verify'])->name('daily.verify');
+    Route::get('/daily-activity/export-da',       [DailyActivityController::class, 'exportDA'])->name('daily.export-da');
+    Route::get('/daily-activity/export-ts',       [DailyActivityController::class, 'exportTS'])->name('daily.export-ts');
+    Route::get('/daily-activity/photos',                    [DailyActivityController::class, 'photoFolders'])->name('daily.photos.folders');
+    Route::get('/daily-activity/photos/{ticketNumber}',      [DailyActivityController::class, 'photosByTicket'])->name('daily.photos.byTicket');
+    Route::delete('/daily-activity/photos/{photoId}',        [DailyActivityController::class, 'deletePhoto'])->name('daily.photos.delete');
+    Route::delete('/daily-activity/photos/folder/{ticketNumber}', [DailyActivityController::class, 'deletePhotoFolder'])->name('daily.photos.deleteFolder');
+    Route::get('/daily-activity/photos/{ticketNumber}/zip',  [DailyActivityController::class, 'exportPhotoZip'])->name('daily.photos.zip');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 // PLACEHOLDER — semua submodul yang belum digarap, biar pondasi navigasi
 // (sidebar Modul + tab Sub Modul) lengkap sejak awal, sesuai UI Approve.
 // Nanti satu-satu diganti jadi Controller sungguhan pas gilirannya, urutan
@@ -95,7 +116,6 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     };
 
     // -- Dismantle Asset Write-Off (sisanya) --
-    Route::get('/daily-activity',    $placeholder('Daily Activity', 'fa-running', 'daily_activity'))->name('daily.index');
     Route::get('/site-map',          $placeholder('Site Map', 'fa-map', 'site_map'))->name('sitemap.index');
     Route::get('/site-map/tracking', $placeholder('Mode Tracking', 'fa-satellite-dish', 'mode_tracking'))->name('sitemap.tracking');
 
