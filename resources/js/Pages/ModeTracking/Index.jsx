@@ -3,100 +3,154 @@ import { usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import 'leaflet/dist/leaflet.css';
 
-const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+const BASEMAPS = {
+    satellite: { label: 'Satelit', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri' },
+    topo:      { label: 'Topografi', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenTopoMap contributors' },
+    osm:       { label: 'OpenStreetMap', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
+};
+const TEAM_COLOR = '#2563eb';   // Posisi Tim -- biru
+const TARGET_COLOR = '#f97316'; // Target Plan -- oranye
 
 export default function ModeTrackingIndex() {
     const { settings, auth } = usePage().props;
     const isAdmin = ['super_admin', 'admin'].includes(auth?.user?.role);
     const [positions, setPositions] = useState([]);
-    const [plannedSites, setPlannedSites] = useState([]);
+    const [plannedSites, setPlannedSites] = useState(null); // null = belum di-load
     const [settingOpen, setSettingOpen] = useState(false);
     const [lastRefresh, setLastRefresh] = useState(null);
+    const [basemap, setBasemap] = useState('satellite');
 
     const mapRef = useRef(null);
     const leafletMapRef = useRef(null);
+    const tileLayerRef = useRef(null);
     const teamLayerRef = useRef(null);
     const siteLayerRef = useRef(null);
     const LRef = useRef(null);
 
-    const refresh = async () => {
-        const [posRes, siteRes] = await Promise.all([
-            fetch(route('tracking.positions')).then(r => r.json()),
-            fetch(route('tracking.planned-sites')).then(r => r.json()),
-        ]);
-        setPositions(posRes.data ?? []);
-        setPlannedSites(siteRes.data ?? []);
+    const makeBadgeIcon = (L, color, icon = 'fa-car') => L.divIcon({
+        className: '',
+        html: `<div style="width:30px;height:30px;border-radius:50%;background:#141821;border:2px solid ${color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.5);">
+                 <i class="fas ${icon}" style="color:${color};font-size:13px;"></i>
+               </div>`,
+        iconSize: [30, 30], iconAnchor: [15, 15],
+    });
+
+    const refreshPositions = async () => {
+        const res = await fetch(route('tracking.positions'));
+        const json = await res.json();
+        setPositions(json.data ?? []);
         setLastRefresh(new Date());
     };
 
-    // Polling tiap 15 detik -- radar "live".
+    const loadPlanTarget = async () => {
+        const res = await fetch(route('tracking.planned-sites'));
+        const json = await res.json();
+        setPlannedSites(json.data ?? []);
+    };
+
+    // Polling posisi tim tiap 15 detik -- radar "live". Target Plan HARUS
+    // diklik manual (tombol "Load Plan Target"), nggak auto-fetch.
     useEffect(() => {
-        refresh();
-        const t = setInterval(refresh, 15000);
+        refreshPositions();
+        const t = setInterval(refreshPositions, 15000);
         return () => clearInterval(t);
     }, []);
 
-    // Init peta + gambar ulang marker tiap kali data berubah.
+    const ensureMap = async () => {
+        const L = LRef.current ?? (LRef.current = (await import('leaflet')).default);
+        if (!leafletMapRef.current) {
+            leafletMapRef.current = L.map(mapRef.current).setView([-2.5, 118], 5);
+            tileLayerRef.current = L.tileLayer(BASEMAPS[basemap].url, { attribution: BASEMAPS[basemap].attribution }).addTo(leafletMapRef.current);
+            teamLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
+            siteLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
+        }
+        return L;
+    };
+
+    useEffect(() => {
+        (async () => {
+            if (!mapRef.current) return;
+            await ensureMap();
+            if (tileLayerRef.current) leafletMapRef.current.removeLayer(tileLayerRef.current);
+            const L = LRef.current;
+            tileLayerRef.current = L.tileLayer(BASEMAPS[basemap].url, { attribution: BASEMAPS[basemap].attribution }).addTo(leafletMapRef.current);
+            tileLayerRef.current.bringToBack();
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [basemap]);
+
     useEffect(() => {
         if (!mapRef.current) return;
         (async () => {
-            const L = LRef.current ?? (LRef.current = (await import('leaflet')).default);
-            if (!leafletMapRef.current) {
-                leafletMapRef.current = L.map(mapRef.current).setView([-2.5, 118], 5);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors',
-                }).addTo(leafletMapRef.current);
-                teamLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
-                siteLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
-            }
-
+            const L = await ensureMap();
             teamLayerRef.current.clearLayers();
-            siteLayerRef.current.clearLayers();
-
-            siteLayerRef.current.eachLayer(() => {});
-            plannedSites.forEach((s) => {
-                if (!s.latitude || !s.longitude) return;
-                L.circleMarker([s.latitude, s.longitude], {
-                    radius: 5, color: '#8b949e', fillColor: '#8b949e', fillOpacity: 0.5, weight: 1,
-                }).bindPopup(`<b>${s.site_id ?? '-'}</b> — ${s.site_name ?? '-'}<br/>PIC: ${s.pic_team ?? '-'}<br/>Status: ${s.task_status}`)
-                  .addTo(siteLayerRef.current);
-            });
-
             positions.forEach((p) => {
-                const marker = L.circleMarker([p.latitude, p.longitude], {
-                    radius: 9, color: '#06d6a0', fillColor: '#06d6a0', fillOpacity: 0.9, weight: 2,
-                }).bindPopup(`<b>${p.full_name}</b> (${p.username})<br/>Update: ${new Date(p.recorded_at).toLocaleString('id-ID')}`);
-                marker.addTo(teamLayerRef.current);
+                L.marker([p.latitude, p.longitude], { icon: makeBadgeIcon(L, TEAM_COLOR, 'fa-car') })
+                    .bindTooltip(p.full_name, { permanent: true, direction: 'bottom', className: 'tracking-label' })
+                    .bindPopup(`<b>${p.full_name}</b> (${p.username})<br/>Update: ${new Date(p.recorded_at).toLocaleString('id-ID')}`)
+                    .addTo(teamLayerRef.current);
             });
         })();
-    }, [positions, plannedSites]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [positions]);
+
+    useEffect(() => {
+        if (!mapRef.current || plannedSites === null) return;
+        (async () => {
+            const L = await ensureMap();
+            siteLayerRef.current.clearLayers();
+            plannedSites.forEach((s) => {
+                if (!s.latitude || !s.longitude) return;
+                L.marker([s.latitude, s.longitude], { icon: makeBadgeIcon(L, TARGET_COLOR, 'fa-map-pin') })
+                    .bindTooltip(s.site_id ?? s.ticket_number, { permanent: true, direction: 'bottom', className: 'tracking-label' })
+                    .bindPopup(`<b>${s.site_id ?? '-'}</b> — ${s.site_name ?? '-'}<br/>PIC: ${s.pic_team ?? '-'}<br/>Status: ${s.task_status}`)
+                    .addTo(siteLayerRef.current);
+            });
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [plannedSites]);
 
     return (
         <AppLayout activeSubmenu="mode_tracking">
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={S.toolbar}>
-                    <h2 style={S.title}><i className="fas fa-satellite-dish" style={{ color: '#00b4d8', marginRight: 10 }} /> Mode Tracking</h2>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '.78rem', color: '#8b949e' }}>
-                            <i className="fas fa-users" style={{ color: '#06d6a0', marginRight: 4 }} /> {positions.length} online
-                            {lastRefresh && <> · refresh {lastRefresh.toLocaleTimeString('id-ID')}</>}
+                    <span style={S.titleTag}><i className="fas fa-satellite-dish" /> Mode Tracking</span>
+                    <span style={S.pill}><i className="fas fa-car" /> {positions.length} tim aktif</span>
+                    <button onClick={loadPlanTarget} style={S.btn('#00b4d8')}><i className="fas fa-map-pin" /> Load Plan Target</button>
+                    {lastRefresh && (
+                        <span style={{ fontSize: '.75rem', color: '#6e7681' }}>
+                            <i className="fas fa-sync" /> Posisi tim update: {lastRefresh.toLocaleTimeString('id-ID')}
                         </span>
-                        <span style={{
-                            ...S.badge,
-                            background: settings?.gps_paused ? 'rgba(255,107,107,.15)' : 'rgba(6,214,160,.15)',
-                            color: settings?.gps_paused ? '#ff6b6b' : '#06d6a0',
-                        }}>
-                            <i className={`fas ${settings?.gps_paused ? 'fa-pause' : 'fa-play'}`} />
-                            {settings?.gps_paused ? ' GPS Paused' : ' GPS Aktif'} ({settings?.gps_schedule_start}–{settings?.gps_schedule_end})
-                        </span>
+                    )}
+                    <span style={{
+                        ...S.badge,
+                        background: settings?.gps_paused ? 'rgba(255,107,107,.15)' : 'rgba(6,214,160,.15)',
+                        color: settings?.gps_paused ? '#ff6b6b' : '#06d6a0',
+                    }}>
+                        <i className={`fas ${settings?.gps_paused ? 'fa-pause' : 'fa-play'}`} />
+                        {settings?.gps_paused ? ' GPS Paused' : ' GPS Aktif'} ({settings?.gps_schedule_start}–{settings?.gps_schedule_end})
+                    </span>
+                    <div style={{ marginLeft: 'auto' }}>
                         {isAdmin && (
-                            <button onClick={() => setSettingOpen(true)} style={S.btn}><i className="fas fa-cog" /> Setting Interval GPS</button>
+                            <button onClick={() => setSettingOpen(true)} style={S.btn('#9d4edd')}><i className="fas fa-cog" /> Setting Interval</button>
                         )}
-                        <button onClick={refresh} style={S.btn}><i className="fas fa-sync" /> Refresh</button>
                     </div>
                 </div>
                 <div style={{ flex: 1, position: 'relative' }}>
                     <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+
+                    <div style={S.basemapBox}>
+                        {Object.entries(BASEMAPS).map(([key, b]) => (
+                            <label key={key} style={S.basemapItem}>
+                                <input type="radio" name="basemap" checked={basemap === key} onChange={() => setBasemap(key)} /> {b.label}
+                            </label>
+                        ))}
+                    </div>
+
+                    <div style={S.legendBox}>
+                        <span style={S.legendItem}><span style={{ ...S.legendDot, background: TEAM_COLOR }} /> Posisi Tim</span>
+                        <span style={S.legendItem}><span style={{ ...S.legendDot, background: TARGET_COLOR }} /> Target Plan</span>
+                    </div>
                 </div>
             </div>
             {settingOpen && <ScheduleModal settings={settings} onClose={() => setSettingOpen(false)} />}
@@ -149,10 +203,22 @@ function ScheduleModal({ settings, onClose }) {
 }
 
 const S = {
-    toolbar: { padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #2a3140', flexShrink: 0, flexWrap: 'wrap', gap: 10 },
-    title: { fontSize: '1.1rem', fontWeight: 700, color: '#e6edf3', display: 'flex', alignItems: 'center' },
-    btn: { padding: '7px 14px', background: 'transparent', border: '1px solid #2a3140', borderRadius: 7, color: '#e6edf3', fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 },
-    badge: { padding: '4px 12px', borderRadius: 20, fontSize: '.75rem', fontWeight: 700 },
+    toolbar: { padding: '10px 20px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', borderBottom: '1px solid #2a3140', flexShrink: 0, flexWrap: 'wrap', gap: 12 },
+    titleTag: { color: '#00b4d8', fontWeight: 700, fontSize: '.85rem', display: 'flex', alignItems: 'center', gap: 6 },
+    pill: { fontSize: '.75rem', color: '#8b949e', display: 'flex', alignItems: 'center', gap: 6 },
+    btn: (color) => ({ padding: '6px 14px', background: 'transparent', border: `1px solid ${color}`, borderRadius: 7, color, fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }),
+    badge: { padding: '4px 12px', borderRadius: 20, fontSize: '.72rem', fontWeight: 700 },
+    basemapBox: {
+        position: 'absolute', top: 12, right: 12, zIndex: 500, background: '#1c2029', border: '1px solid #2a3140',
+        borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '.78rem', color: '#e6edf3',
+    },
+    basemapItem: { display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' },
+    legendBox: {
+        position: 'absolute', bottom: 24, right: 12, zIndex: 500, background: 'rgba(20,24,33,.9)', border: '1px solid #2a3140',
+        borderRadius: 8, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 6, fontSize: '.75rem', color: '#e6edf3',
+    },
+    legendItem: { display: 'flex', alignItems: 'center', gap: 6 },
+    legendDot: { width: 10, height: 10, borderRadius: '50%', display: 'inline-block' },
 };
 const M = {
     overlay: { position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
