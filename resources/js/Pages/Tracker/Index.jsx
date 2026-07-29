@@ -4,6 +4,12 @@ import AppLayout from '@/Layouts/AppLayout';
 
 const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
+// Kategori kolom tambahan (Asset/Site/Permit/Dismantle Info) disimpen di
+// localStorage -- biar TETAP kepilih walau user ganti-ganti filter lain
+// (region/status/dll), cuma ke-reset kalau dia sendiri yang unselect atau
+// klik "Main".
+const CATS_STORAGE_KEY = 'tracker_active_cats';
+
 /* ── Badge helpers ── */
 const B = {
     base: { padding: '3px 9px', borderRadius: '20px', fontSize: '.72rem', fontWeight: 600, whiteSpace: 'nowrap' },
@@ -75,13 +81,30 @@ export default function TrackerIndex() {
         ...CATS,
         dismantle_info: { ...CATS.dismantle_info, cols: CATS.dismantle_info.cols.filter(c => !['plan_kom', 'actual_cost'].includes(c)) },
     };
-    const [activeCats, setActiveCats] = useState([]);
+    // Baca kategori aktif dari localStorage saat pertama render, supaya
+    // tetap kepilih walau halaman ini di-reload penuh (klik filter lain).
+    const [activeCats, setActiveCats] = useState(() => {
+        try {
+            const saved = window.localStorage.getItem(CATS_STORAGE_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
     const [sort, setSort] = useState('ticket_created_date');
     const [dir, setDir] = useState('desc');
     const [editRow, setEditRow] = useState(null);
     const activeCols = [...MAIN_COLS, ...activeCats.flatMap(c => CAT_CFG[c]?.cols ?? [])];
 
-    const toggleCat = (cat) => setActiveCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+    const persistCats = (next) => {
+        try { window.localStorage.setItem(CATS_STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    };
+    const toggleCat = (cat) => setActiveCats(prev => {
+        const next = prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat];
+        persistCats(next);
+        return next;
+    });
+    const goToMain = () => { setActiveCats([]); persistCats([]); };
 
     const doSort = (col) => {
         if (!MAIN_COLS.includes(col)) return;
@@ -100,7 +123,9 @@ export default function TrackerIndex() {
         <AppLayout activeSubmenu="tracker" leftPanel={<LeftPanel filterOptions={filterOptions} auth={auth} />}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={S.catBar}>
-                    <span style={S.mainTag}><i className="fas fa-home" /> Main</span>
+                    <button onClick={goToMain} style={{ ...S.catBtn, ...S.mainBtn }}>
+                        <i className="fas fa-home" /> Main
+                    </button>
                     {Object.entries(CAT_CFG).map(([key, cat]) => (
                         <button key={key} onClick={() => toggleCat(key)} style={{
                             ...S.catBtn,
@@ -463,8 +488,8 @@ function Pagination({ result }) {
 
 const S = {
     catBar: { display: 'flex', gap: 8, padding: '10px 20px', alignItems: 'center', borderBottom: '1px solid #2a3140', flexShrink: 0, flexWrap: 'wrap' },
-    mainTag: { display: 'flex', alignItems: 'center', gap: 6, fontSize: '.78rem', color: '#00b4d8', fontWeight: 700 },
     catBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, border: '1px solid', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer' },
+    mainBtn: { background: '#00b4d8', color: '#0a0e14', borderColor: '#00b4d8' },
     exportBtn: { padding: '7px 14px', background: 'linear-gradient(135deg,#00b4d8,#0096c7)', border: 'none', borderRadius: 7, color: '#fff', fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 },
     table: { width: '100%', borderCollapse: 'collapse', minWidth: '1400px' },
     thead: { background: '#1c2029', position: 'sticky', top: 0, zIndex: 5 },
