@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::create('daily_activity', function (Blueprint $table) {
             $table->id();
-            $table->string('ticket_number', 50)->nullable()->index();
+            // Unique -- dipakai sebagai kunci upsert() di Populate (1 ticket
+            // cuma 1 baris aktif di minggu berjalan).
+            $table->string('ticket_number', 50)->nullable()->unique();
             $table->string('site_id', 50)->nullable();
             $table->string('site_name', 150)->nullable();
             $table->string('regional', 100)->nullable()->index();
