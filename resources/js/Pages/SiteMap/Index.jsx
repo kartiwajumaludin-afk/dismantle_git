@@ -30,7 +30,6 @@ export default function SiteMapIndex() {
     const [priorityFilter, setPriorityFilter] = useState(ALL_PRIORITIES);
     const [priorityOpen, setPriorityOpen] = useState(false);
     const [basemap, setBasemap] = useState('satellite');
-    const [basemapOpen, setBasemapOpen] = useState(false);
     const [filterSummary, setFilterSummary] = useState({ region: '—', nop: '—' });
 
     const mapRef = useRef(null);
@@ -215,7 +214,12 @@ export default function SiteMapIndex() {
     );
 }
 
-/* ─── LEFT PANEL: QUICK FILTERS (standar 350px) ─── */
+/* ─── LEFT PANEL: QUICK FILTERS (standar 350px) ─────────────────────
+   REGION: WAJIB persis sama di semua modul (grid 3 kolom, "All Region"
+   + "Region 01".."Region 12" zero-padded, apply langsung pas diklik,
+   TANPA tombol submit terpisah) -- JANGAN diubah/disesuaikan per modul.
+   Filter lain (Ticket Status/Batch/Sub Type/NOP/Search) BOLEH disesuaikan
+   sesuai kebutuhan modul. ─────────────────────────────────────────── */
 function LeftPanel({ filterOptions, auth }) {
     const params = Object.fromEntries(new URLSearchParams(window.location.search));
     const [regions, setRegions] = useState(params.regions ? params.regions.split(',') : ['all']);
@@ -258,21 +262,21 @@ function LeftPanel({ filterOptions, auth }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div style={F.header}>
-                <span style={{ color: '#e6edf3', fontWeight: 700, fontSize: '.9rem' }}><i className="fas fa-filter" style={{ color: '#00b4d8', marginRight: 8 }} />Filters</span>
-                <button onClick={resetAll} style={F.btnReset}><i className="fas fa-redo" /> Reset Filter</button>
+                <span style={{ color: '#e6edf3', fontWeight: 700, fontSize: '.9rem' }}><i className="fas fa-filter" style={{ color: '#00b4d8', marginRight: 8 }} />Quick Filters</span>
+                <button onClick={resetAll} style={F.btnReset}><i className="fas fa-redo" /> Reset</button>
             </div>
             <div className="left-panel-scroll" style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
                     <div style={F.label}>REGION</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                    <div style={F.grid3}>
                         <button onClick={() => toggleRegion('all')} style={{ ...F.chip, gridColumn: '1/-1', ...(regions.includes('all') ? F.chipActive : {}) }}>All Region</button>
-                        {REG_LIST.map((r, i) => <button key={r} onClick={() => toggleRegion(r)} style={{ ...F.chip, ...(regions.includes(r) ? F.chipActive : {}) }}>{`Region ${i + 1}`}</button>)}
+                        {REG_LIST.map(r => (
+                            <button key={r} onClick={() => toggleRegion(r)} style={{ ...F.chip, ...(regions.includes(r) ? F.chipActive : {}) }}>{r.replace('REG', 'Region ')}</button>
+                        ))}
                     </div>
-                    <button onClick={() => apply()} style={{ ...F.btnApply, marginTop: 8 }}><i className="fas fa-check" /> Terapkan Region</button>
                 </div>
                 <MultiSelect label="TICKET STATUS" options={filterOptions?.statuses ?? []} selected={ticketStatus} onChange={v => { setTicketStatus(v); apply({ ticket_status: v }); }} />
                 <MultiSelect label="TICKET BATCH" options={filterOptions?.batches ?? []} selected={ticketBatch} onChange={v => { setTicketBatch(v); apply({ ticket_batch: v }); }} />
-                <MultiSelect label="SUB TYPE" options={[]} selected={[]} onChange={() => {}} placeholder="All Sub Types" />
                 <MultiSelect label="NOP" options={filterOptions?.nops ?? []} selected={nop} onChange={v => { setNop(v); apply({ nop: v }); }} />
                 <div>
                     <div style={F.label}>SEARCH SITE</div>
@@ -281,18 +285,18 @@ function LeftPanel({ filterOptions, auth }) {
                         {search && <button onClick={() => { setSearch(''); apply({ search: '' }); }} style={F.clearBtn}><i className="fas fa-times" /></button>}
                     </div>
                 </div>
-                <button onClick={resetAll} style={F.btnResetBig}><i className="fas fa-redo" /> Reset Filter</button>
+                <button onClick={() => apply()} style={F.btnApply}><i className="fas fa-search" /> Terapkan Filter</button>
             </div>
         </div>
     );
 }
 
 function MultiSelect({ label, options, selected, onChange, placeholder }) {
+    if (!options.length) return null;
     return (
         <div>
             <div style={F.label}>{label}</div>
-            <select multiple={options.length > 0} value={selected} onChange={e => onChange(Array.from(e.target.selectedOptions, o => o.value))} style={{ ...F.input, height: options.length ? 90 : 'auto' }}>
-                {options.length === 0 && <option value="">{placeholder ?? `All ${label}`}</option>}
+            <select multiple value={selected} onChange={e => onChange(Array.from(e.target.selectedOptions, o => o.value))} style={{ ...F.input, height: 90 }}>
                 {options.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
         </div>
@@ -326,11 +330,11 @@ const S = {
 const F = {
     header: { padding: '12px 16px', borderBottom: '1px solid #2a3140', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 },
     btnReset: { background: 'none', border: '1px solid #2a3140', borderRadius: 6, color: '#e6edf3', fontSize: '.75rem', padding: '4px 10px', cursor: 'pointer' },
-    btnResetBig: { padding: '9px 0', background: 'rgba(255,255,255,.06)', border: '1px solid #2a3140', borderRadius: 8, color: '#e6edf3', fontWeight: 700, fontSize: '.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
     label: { fontSize: '.68rem', fontWeight: 700, color: '#6e7681', letterSpacing: '.6px', marginBottom: 6, textTransform: 'uppercase' },
+    grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 },
     chip: { padding: '7px 4px', borderRadius: 6, fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,.04)', color: '#8b949e', border: '1px solid #2a3140' },
     chipActive: { background: '#00b4d8', color: '#fff', border: '1px solid #00b4d8' },
     input: { width: '100%', boxSizing: 'border-box', padding: '8px 10px', background: '#1c2029', border: '1px solid #2a3140', borderRadius: 7, color: '#e6edf3', fontSize: '.82rem', outline: 'none' },
     clearBtn: { position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '.75rem' },
-    btnApply: { width: '100%', padding: '8px 0', background: 'linear-gradient(135deg,#00b4d8,#0096c7)', border: 'none', borderRadius: 7, color: '#fff', fontWeight: 700, fontSize: '.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
+    btnApply: { padding: '10px 0', background: 'linear-gradient(135deg,#00b4d8,#0096c7)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer' },
 };
