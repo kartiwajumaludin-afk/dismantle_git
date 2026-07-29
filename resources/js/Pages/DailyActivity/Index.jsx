@@ -21,7 +21,7 @@ const SUMMARY_CARDS = [
 ];
 
 export default function DailyActivityIndex() {
-    const { result, stats, filterOptions, auth } = usePage().props;
+    const { result, stats, filterOptions, auth, picUsers } = usePage().props;
     const [selected, setSelected] = useState([]);
     const [editRow, setEditRow] = useState(null);
     const [verifyRow, setVerifyRow] = useState(null);
@@ -122,7 +122,7 @@ export default function DailyActivityIndex() {
             {editRow && <EditModal row={editRow} onClose={() => setEditRow(null)} />}
             {verifyRow && <VerifyModal row={verifyRow} onClose={() => setVerifyRow(null)} />}
             {photosOpen && <PhotosModal onClose={() => setPhotosOpen(false)} />}
-            {assignOpen && <AssignModal ids={selected} onClose={() => { setAssignOpen(false); setSelected([]); }} />}
+            {assignOpen && <AssignModal ids={selected} picUsers={picUsers ?? []} onClose={() => { setAssignOpen(false); setSelected([]); }} />}
         </AppLayout>
     );
 }
@@ -365,8 +365,9 @@ function VerifyModal({ row, onClose }) {
     );
 }
 
-/* ─── ASSIGN MODAL ─── */
-function AssignModal({ ids, onClose }) {
+/* ─── ASSIGN MODAL — PIC Team dipilih dari user Field Team (MobApp),
+     bukan ketik manual ─── */
+function AssignModal({ ids, picUsers, onClose }) {
     const [picTeam, setPicTeam] = useState('');
     const [saving, setSaving] = useState(false);
     const submit = (e) => {
@@ -377,7 +378,17 @@ function AssignModal({ ids, onClose }) {
     return (
         <Modal title={`Assign ${ids.length} Task`} onClose={onClose}>
             <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Field label="PIC Team *"><input required value={picTeam} onChange={e => setPicTeam(e.target.value)} placeholder="Nama PIC Team" style={F.input} /></Field>
+                <Field label="PIC Team *">
+                    <select required value={picTeam} onChange={e => setPicTeam(e.target.value)} style={F.input}>
+                        <option value="">-- Pilih User Field Team --</option>
+                        {picUsers.map(u => <option key={u.id} value={u.full_name}>{u.full_name} ({u.username})</option>)}
+                    </select>
+                    {picUsers.length === 0 && (
+                        <div style={{ fontSize: '.72rem', color: '#ffd43b', marginTop: 4 }}>
+                            Belum ada user dengan Akses Field Team (MobApp) — tambahkan dulu di User Management.
+                        </div>
+                    )}
+                </Field>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                     <button type="button" onClick={onClose} style={M.btnCancel}>Batal</button>
                     <button type="submit" disabled={saving} style={M.btnSave}>{saving ? 'Menyimpan...' : 'Assign'}</button>
