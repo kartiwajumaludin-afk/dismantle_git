@@ -1,6 +1,13 @@
 {
+  "_AppLayout-CB9dBTP3.js": {
+    "file": "assets/AppLayout-CB9dBTP3.js",
+    "name": "AppLayout",
+    "imports": [
+      "resources/js/app.jsx"
+    ]
+  },
   "resources/css/app.css": {
-    "file": "assets/app-DTVQkLRS.css",
+    "file": "assets/app-DnYB6dVc.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,7 +16,7 @@
     ]
   },
   "resources/js/Pages/Auth/ChangePassword.jsx": {
-    "file": "assets/ChangePassword-nfni_cSF.js",
+    "file": "assets/ChangePassword-Duo39ssh.js",
     "name": "ChangePassword",
     "src": "resources/js/Pages/Auth/ChangePassword.jsx",
     "isDynamicEntry": true,
@@ -17,11 +24,11 @@
       "resources/js/app.jsx"
     ],
     "css": [
-      "assets/app-DTVQkLRS.css"
+      "assets/app-DnYB6dVc.css"
     ]
   },
   "resources/js/Pages/Auth/Login.jsx": {
-    "file": "assets/Login-BvNcnxWc.js",
+    "file": "assets/Login-Cid3vrus.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.jsx",
     "isDynamicEntry": true,
@@ -29,33 +36,118 @@
       "resources/js/app.jsx"
     ],
     "css": [
-      "assets/app-DTVQkLRS.css"
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/DailyActivity/Index.jsx": {
+    "file": "assets/Index-9c-wPpmp.js",
+    "name": "Index",
+    "src": "resources/js/Pages/DailyActivity/Index.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/Import/Index.jsx": {
+    "file": "assets/Index-Q3aYcc0W.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Import/Index.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/Placeholder.jsx": {
+    "file": "assets/Placeholder-BdCqFn19.js",
+    "name": "Placeholder",
+    "src": "resources/js/Pages/Placeholder.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/Tracker/Asset.jsx": {
+    "file": "assets/Asset-Ck2xIW6N.js",
+    "name": "Asset",
+    "src": "resources/js/Pages/Tracker/Asset.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/Tracker/Index.jsx": {
+    "file": "assets/Index-DoBUjtLk.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Tracker/Index.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
+    ]
+  },
+  "resources/js/Pages/Tracker/Workinfo.jsx": {
+    "file": "assets/Workinfo-Ce0hDAf3.js",
+    "name": "Workinfo",
+    "src": "resources/js/Pages/Tracker/Workinfo.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
+    ],
+    "css": [
+      "assets/app-DnYB6dVc.css"
     ]
   },
   "resources/js/Pages/UserManagement/Index.jsx": {
-    "file": "assets/Index-N0ywqebc.js",
+    "file": "assets/Index-DWkW1jIB.js",
     "name": "Index",
     "src": "resources/js/Pages/UserManagement/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "resources/js/app.jsx"
+      "resources/js/app.jsx",
+      "_AppLayout-CB9dBTP3.js"
     ],
     "css": [
-      "assets/app-DTVQkLRS.css"
+      "assets/app-DnYB6dVc.css"
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-BJtLFuA6.js",
+    "file": "assets/app-CqlQr2Yz.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
     "dynamicImports": [
       "resources/js/Pages/Auth/ChangePassword.jsx",
       "resources/js/Pages/Auth/Login.jsx",
+      "resources/js/Pages/DailyActivity/Index.jsx",
+      "resources/js/Pages/Import/Index.jsx",
+      "resources/js/Pages/Placeholder.jsx",
+      "resources/js/Pages/Tracker/Asset.jsx",
+      "resources/js/Pages/Tracker/Index.jsx",
+      "resources/js/Pages/Tracker/Workinfo.jsx",
       "resources/js/Pages/UserManagement/Index.jsx"
     ],
     "css": [
-      "assets/app-DTVQkLRS.css"
+      "assets/app-DnYB6dVc.css"
     ]
   }
 }
