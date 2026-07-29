@@ -21,6 +21,7 @@ class DailyActivityController extends Controller
 
         return Inertia::render('DailyActivity/Index', [
             'result'        => $this->service->getData($request, $regionCodes),
+            'stats'         => $this->service->getStats($request, $regionCodes),
             'filterOptions' => $this->service->getFilterOptions($regionCodes),
             'filters'       => $request->only(['filter_mode', 'filter_date', 'regions', 'pic_team', 'task_status', 'nop', 'search']),
         ]);
