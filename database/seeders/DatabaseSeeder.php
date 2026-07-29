@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RegionSeeder::class,
             MenuSeeder::class,
             UserSeeder::class,
+            SettingsSeeder::class,
         ]);
     }
 }
