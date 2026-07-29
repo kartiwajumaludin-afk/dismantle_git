@@ -85,16 +85,18 @@ class DailyActivityService
         ");
     }
 
-    // ── Data + filter (4 tab tanggal + region/pic/status/nop/search) ──
-    public function getData(Request $request, array $userRegionCodes = []): array
+    /**
+     * Filter dasar yang dipakai bareng getData() & getStats() -- SEMUA filter
+     * kecuali task_status (biar Summary Card tetap nunjukkin semua kategori
+     * meski user lagi nge-filter Task Status tertentu di tabel).
+     */
+    private function baseQuery(Request $request, array $userRegionCodes, bool $includeTaskStatus): \Illuminate\Database\Query\Builder
     {
         $query = DB::table('daily_activity');
 
         if (!empty($userRegionCodes)) {
             $names = $this->codesToNames($userRegionCodes);
-            if (!empty($names)) {
-                $query->whereIn('regional', $names);
-            }
+            if (!empty($names)) $query->whereIn('regional', $names);
         }
 
         $mode = $request->get('filter_mode', 'today');
@@ -107,7 +109,6 @@ class DailyActivityService
         } elseif ($mode === 'custom' && $request->filled('filter_date')) {
             $query->whereDate('plan_dismantle_date', $request->filter_date);
         }
-        // mode 'all' -> tanpa filter tanggal sama sekali.
 
         if ($request->filled('regions') && $request->regions !== 'all') {
             $names = $this->codesToNames(explode(',', $request->regions));
@@ -116,7 +117,7 @@ class DailyActivityService
         if ($request->filled('pic_team') && $request->pic_team !== 'all') {
             $query->whereIn('pic_team', explode(',', $request->pic_team));
         }
-        if ($request->filled('task_status') && $request->task_status !== 'all') {
+        if ($includeTaskStatus && $request->filled('task_status') && $request->task_status !== 'all') {
             $query->whereIn('task_status', explode(',', $request->task_status));
         }
         if ($request->filled('nop') && $request->nop !== 'all') {
@@ -132,6 +133,14 @@ class DailyActivityService
             });
         }
 
+        return $query;
+    }
+
+    // ── Data + filter (4 tab tanggal + region/pic/status/nop/search) ──
+    public function getData(Request $request, array $userRegionCodes = []): array
+    {
+        $query = $this->baseQuery($request, $userRegionCodes, true);
+
         $total   = $query->count();
         $perPage = (int) $request->get('per_page', 50);
         $page    = max(1, (int) $request->get('page', 1));
@@ -145,6 +154,37 @@ class DailyActivityService
             'data' => $data, 'total' => $total, 'per_page' => $perPage,
             'current_page' => $page, 'last_page' => max(1, (int) ceil($total / $perPage)),
             'from' => $total > 0 ? $offset + 1 : 0, 'to' => min($offset + $perPage, $total),
+        ];
+    }
+
+    /**
+     * Summary Card -- Total/Planned/Assigned/In Progress/Reported/Completed.
+     * Pakai filter yang sama kayak tabel TAPI TANPA filter Task Status,
+     * biar semua kategori kelihatan meski user lagi nge-filter salah satunya.
+     * Mapping 8 task_status -> 5 kategori tampilan:
+     *   in_progress = in_progress + working + replanned (masih berjalan)
+     *   completed   = completed + verified (sudah kelar)
+     */
+    public function getStats(Request $request, array $userRegionCodes = []): array
+    {
+        $rows = $this->baseQuery($request, $userRegionCodes, false)
+            ->select('task_status', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('task_status')
+            ->pluck('jumlah', 'task_status');
+
+        $planned    = (int) ($rows['planned'] ?? 0);
+        $assigned   = (int) ($rows['assigned'] ?? 0);
+        $inProgress = (int) ($rows['in_progress'] ?? 0) + (int) ($rows['working'] ?? 0) + (int) ($rows['replanned'] ?? 0);
+        $reported   = (int) ($rows['reported'] ?? 0);
+        $completed  = (int) ($rows['completed'] ?? 0) + (int) ($rows['verified'] ?? 0);
+
+        return [
+            'total'       => $rows->sum(),
+            'planned'     => $planned,
+            'assigned'    => $assigned,
+            'in_progress' => $inProgress,
+            'reported'    => $reported,
+            'completed'   => $completed,
         ];
     }
 
