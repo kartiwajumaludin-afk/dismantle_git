@@ -7,6 +7,20 @@ use Illuminate\Http\Request;
 
 class TrackerService
 {
+    // Dipakai exportCsv() -- sinkron sama CATS/MAIN_COLS di Tracker/Index.jsx.
+    private const MAIN_COLS = [
+        'ticket_number', 'site_id', 'site_name', 'ticket_status_name', 'regional',
+        'network_operation_and_productivity', 'teritory_operation', 'workable_status',
+        'general_status', 'asset_status', 'ticket_batch', 'ticket_sub_type_name',
+        'ticket_created_date', 'priority_site', 'intersection',
+    ];
+    private const CAT_COLS = [
+        'asset_info'     => ['jumlah_asset', 'cat_asset', 'asset_position', 'percentage_asset_actual', 'plan_asset_dismantle', 'actual_asset_dismantle'],
+        'site_info'      => ['assignee_group', 'tp_company', 'latitude', 'longitude', 'caf_submit', 'caf_approved', 'caf_status'],
+        'permit_info'    => ['working_permit_start_date', 'working_permit_end_date', 'working_permit_status_name', 'sik_number', 'start_permit_tp_date', 'end_permit_tp_date', 'status_permit_tp'],
+        'dismantle_info' => ['site_status', 'site_issue', 'category_issue', 'detail_issue', 'remark_dismantle', 'mom', 'cat_pending_approval', 'aging_pending_approval', 'submit_before', 'approve_before', 'dismantle', 'submit_after', 'approve_after', 'pcaa_approve', 'closed', 'approved_nop', 'avg_approved_nop', 'partner_company', 'plan_dismantle_date', 'plan_dismantle_week', 'pic_team', 'act_dismantle_week', 'plan_kom', 'actual_cost', 'asset_active', 'asset_not_found', 'asset_undefined'],
+    ];
+
     // ── Tracker Data ─────────────────────────────────────────────────
     public function getTrackerData(Request $request, array $userRegionCodes = []): array
     {
@@ -193,6 +207,42 @@ class TrackerService
             'from'         => $total > 0 ? $offset + 1 : 0,
             'to'           => min($offset + $perPage, $total),
         ];
+    }
+
+    // ── Export CSV -- ikut filter aktif + kategori kolom yang dipilih ──
+    // (BUG LAMA: method ini belum pernah dibuat padahal sudah dipanggil
+    // controller -- klik Export CSV bakal fatal error sebelum ini.)
+    public function exportCsv(Request $request, array $userRegionCodes = [], bool $canSeeCost = false)
+    {
+        $request->merge(['per_page' => 999999999, 'page' => 1]);
+        $rows = $this->getTrackerData($request, $userRegionCodes)['data'];
+
+        $cats = array_filter(explode(',', (string) $request->get('cats', '')));
+        $cols = self::MAIN_COLS;
+        foreach ($cats as $cat) {
+            if (isset(self::CAT_COLS[$cat])) $cols = array_merge($cols, self::CAT_COLS[$cat]);
+        }
+        if (!$canSeeCost) {
+            $cols = array_values(array_diff($cols, ['plan_kom', 'actual_cost']));
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="tracker_export.csv"',
+        ];
+
+        return response()->stream(function () use ($rows, $cols) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, $cols);
+            foreach ($rows as $row) {
+                $line = [];
+                foreach ($cols as $c) {
+                    $line[] = $row->$c ?? '';
+                }
+                fputcsv($out, $line);
+            }
+            fclose($out);
+        }, 200, $headers);
     }
 
     // ── Convert region codes → names ────────────────────────────
