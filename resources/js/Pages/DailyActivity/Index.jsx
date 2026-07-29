@@ -15,8 +15,13 @@ const StatusBadge = ({ value, colorMap }) => {
     return <span style={{ padding: '3px 9px', borderRadius: 20, fontSize: '.72rem', fontWeight: 600, background: `${c}22`, color: c }}>{value}</span>;
 };
 
+const SUMMARY_CARDS = [
+    ['total', 'Total', '#00b4d8'], ['planned', 'Planned', '#8b949e'], ['assigned', 'Assigned', '#00b4d8'],
+    ['in_progress', 'In Progress', '#ffd43b'], ['reported', 'Reported', '#f97316'], ['completed', 'Completed', '#06d6a0'],
+];
+
 export default function DailyActivityIndex() {
-    const { result, filterOptions, auth } = usePage().props;
+    const { result, stats, filterOptions, auth } = usePage().props;
     const [selected, setSelected] = useState([]);
     const [editRow, setEditRow] = useState(null);
     const [verifyRow, setVerifyRow] = useState(null);
@@ -50,6 +55,15 @@ export default function DailyActivityIndex() {
     return (
         <AppLayout activeSubmenu="daily_activity" leftPanel={<LeftPanel filterOptions={filterOptions} auth={auth} />}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                <div style={S.statsBar}>
+                    {SUMMARY_CARDS.map(([key, label, color]) => (
+                        <div key={key} style={S.statCard}>
+                            <div style={{ ...S.statValue, color }}>{(stats?.[key] ?? 0).toLocaleString('id-ID')}</div>
+                            <div style={S.statLabel}>{label}</div>
+                        </div>
+                    ))}
+                </div>
+
                 <div style={S.toolbar}>
                     <h2 style={S.title}><i className="fas fa-running" style={{ color: '#00b4d8', marginRight: 10 }} /> Daily Activity</h2>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -206,7 +220,8 @@ function LeftPanel({ filterOptions, auth }) {
     );
 }
 
-/* ─── EXCEL-STYLE DROPDOWN ─── */
+/* ─── EXCEL-STYLE DROPDOWN — muncul terus walau options masih kosong (belum
+   Populate), biar filternya tetap kelihatan strukturnya, bukan hilang total ─── */
 function ExcelDropdown({ label, options, selected, onChange }) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -221,7 +236,6 @@ function ExcelDropdown({ label, options, selected, onChange }) {
         return () => document.removeEventListener('mousedown', h);
     }, []);
 
-    if (!options.length) return null;
     const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
     const toggleAll = () => { if (allChecked) { setAllChecked(false); setTemp([]); } else { setAllChecked(true); setTemp([]); } };
     const toggleItem = (v) => {
@@ -254,6 +268,9 @@ function ExcelDropdown({ label, options, selected, onChange }) {
                                 <span style={{ color: '#e6edf3', fontWeight: 700 }}>All {label}</span>
                             </label>
                             <div style={{ height: 1, background: '#2a3140' }} />
+                            {filtered.length === 0 && (
+                                <div style={{ padding: '10px 12px', fontSize: '.78rem', color: '#6e7681' }}>Belum ada data (klik Populate dulu).</div>
+                            )}
                             {filtered.map(opt => (
                                 <label key={opt} style={EX.item}>
                                     <input type="checkbox" checked={allChecked || temp.includes(opt)} onChange={() => toggleItem(opt)} style={{ accentColor: '#00b4d8' }} />
@@ -476,6 +493,10 @@ function Pagination({ result }) {
 }
 
 const S = {
+    statsBar: { display: 'flex', gap: 10, padding: '14px 20px 0', flexWrap: 'wrap', flexShrink: 0 },
+    statCard: { flex: 1, minWidth: 100, background: '#1c2029', border: '1px solid #2a3140', borderRadius: 8, padding: '10px 4px', textAlign: 'center' },
+    statValue: { fontSize: '1.3rem', fontWeight: 800 },
+    statLabel: { fontSize: '.68rem', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.4px', marginTop: 2 },
     toolbar: { padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #2a3140', flexShrink: 0, flexWrap: 'wrap', gap: 10 },
     title: { fontSize: '1.1rem', fontWeight: 700, color: '#e6edf3', display: 'flex', alignItems: 'center' },
     btn: (color) => ({ padding: '8px 14px', background: 'transparent', border: `1px solid ${color}`, borderRadius: 7, color, fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }),
