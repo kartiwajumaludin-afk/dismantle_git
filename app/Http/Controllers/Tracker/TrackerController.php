@@ -53,10 +53,12 @@ class TrackerController extends Controller
     }
 
     // ── Export CSV ────────────────────────────────────────────
+    // BUG LAMA: hasil stream() nggak pernah di-`return`, jadi Laravel
+    // ngirim response kosong walau exportCsv() sendiri udah bener.
     public function export(Request $request)
     {
         $regionCodes = $this->getUserRegionCodes();
-        $this->service->exportCsv($request, $regionCodes);
+        return $this->service->exportCsv($request, $regionCodes, $this->canSeeCost());
     }
 
     // ── Manual Get — untuk modal edit ────────────────────────
