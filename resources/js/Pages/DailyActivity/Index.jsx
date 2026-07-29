@@ -37,6 +37,16 @@ export default function DailyActivityIndex() {
 
     const doConfirm = (msg, url) => { if (confirm(msg)) post(url); };
 
+    const COLS = [
+        ['ticket_number', 'Ticket #'], ['site_id', 'Site ID'], ['site_name', 'Site Name'],
+        ['regional', 'Regional'], ['network_operation_and_productivity', 'NOP'],
+        ['ticket_status_name', 'Ticket Status'], ['sub_type', 'Sub Type'],
+        ['plan_dismantle_date', 'Plan Date'], ['task_status', 'Task Status'],
+        ['assignment_status', 'Assign Status'], ['pic_team', 'PIC Team'], ['assigned_by', 'Assigned By'],
+        ['category_issue', 'Category Issue'], ['detail_issue', 'Detail Issue'], ['remark_dismantle', 'Remark Dismantle'],
+        ['work_start_time', 'Start Time'], ['work_end_time', 'End Time'], ['work_duration', 'Duration'],
+    ];
+
     return (
         <AppLayout activeSubmenu="daily_activity" leftPanel={<LeftPanel filterOptions={filterOptions} auth={auth} />}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -58,28 +68,30 @@ export default function DailyActivityIndex() {
                         <thead>
                             <tr style={S.thead}>
                                 <th style={{ ...S.th, width: 32 }}><input type="checkbox" checked={selected.length > 0 && selected.length === (result.data ?? []).length} onChange={toggleSelectAll} /></th>
-                                {['Ticket #', 'Site ID', 'Site Name', 'Regional', 'NOP', 'Plan Date', 'PIC Team', 'Assignment', 'Task Status', 'Category Issue', 'Remark'].map(h => <th key={h} style={S.th}>{h}</th>)}
+                                {COLS.map(([key, label]) => <th key={key} style={S.th}>{label}</th>)}
                                 <th style={S.th}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {(result.data ?? []).length === 0 && (
-                                <tr><td colSpan={13} style={S.emptyCell}>Belum ada data. Klik Populate buat narik data minggu berjalan dari Tracker.</td></tr>
+                                <tr><td colSpan={COLS.length + 2} style={S.emptyCell}>Belum ada data. Klik Populate buat narik data minggu berjalan dari Tracker.</td></tr>
                             )}
                             {result.data?.map((row) => (
                                 <tr key={row.id} style={S.tr}>
                                     <td style={S.td}><input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggleSelect(row.id)} /></td>
-                                    <td style={{ ...S.td, color: '#00b4d8', fontWeight: 600 }}>{row.ticket_number}</td>
-                                    <td style={S.td}>{row.site_id}</td>
-                                    <td style={S.td}>{row.site_name}</td>
-                                    <td style={S.td}>{row.regional}</td>
-                                    <td style={S.td}>{row.network_operation_and_productivity}</td>
-                                    <td style={S.td}>{row.plan_dismantle_date}</td>
-                                    <td style={S.td}>{row.pic_team ?? <span style={{ color: '#3a4255' }}>—</span>}</td>
-                                    <td style={S.td}><StatusBadge value={row.assignment_status} colorMap={{ pending: '#ffd43b', accepted: '#06d6a0', rejected: '#ff6b6b' }} /></td>
-                                    <td style={S.td}><StatusBadge value={row.task_status} colorMap={TASK_STATUS_COLOR} /></td>
-                                    <td style={S.td}>{row.category_issue ?? <span style={{ color: '#3a4255' }}>—</span>}</td>
-                                    <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.remark_dismantle}>{row.remark_dismantle ?? <span style={{ color: '#3a4255' }}>—</span>}</td>
+                                    {COLS.map(([key]) => {
+                                        const val = row[key];
+                                        let content;
+                                        if (key === 'ticket_number') content = <span style={{ color: '#00b4d8', fontWeight: 600 }}>{val}</span>;
+                                        else if (key === 'task_status') content = <StatusBadge value={val} colorMap={TASK_STATUS_COLOR} />;
+                                        else if (key === 'assignment_status') content = <StatusBadge value={val} colorMap={{ pending: '#ffd43b', accepted: '#06d6a0', rejected: '#ff6b6b' }} />;
+                                        else content = val ?? <span style={{ color: '#3a4255' }}>—</span>;
+                                        return (
+                                            <td key={key} style={{ ...S.td, ...(key === 'remark_dismantle' ? { maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' } : {}) }} title={key === 'remark_dismantle' ? val : undefined}>
+                                                {content}
+                                            </td>
+                                        );
+                                    })}
                                     <td style={S.td}>
                                         <div style={{ display: 'flex', gap: 4 }}>
                                             <button onClick={() => setEditRow(row)} style={S.actBtn('#06d6a0')} title="Edit"><i className="fas fa-edit" /></button>
@@ -468,7 +480,7 @@ const S = {
     title: { fontSize: '1.1rem', fontWeight: 700, color: '#e6edf3', display: 'flex', alignItems: 'center' },
     btn: (color) => ({ padding: '8px 14px', background: 'transparent', border: `1px solid ${color}`, borderRadius: 7, color, fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }),
     actBtn: (color) => ({ width: 26, height: 26, borderRadius: 6, border: 'none', background: `${color}22`, color, cursor: 'pointer' }),
-    table: { width: '100%', borderCollapse: 'collapse', minWidth: '1300px' },
+    table: { width: '100%', borderCollapse: 'collapse', minWidth: '1900px' },
     thead: { background: '#1c2029', position: 'sticky', top: 0, zIndex: 5 },
     th: { padding: '10px 12px', textAlign: 'left', fontSize: '.72rem', fontWeight: 700, color: '#8b949e', borderBottom: '1px solid #2a3140', whiteSpace: 'nowrap', textTransform: 'uppercase' },
     tr: { borderBottom: '1px solid rgba(255,255,255,.03)' },
