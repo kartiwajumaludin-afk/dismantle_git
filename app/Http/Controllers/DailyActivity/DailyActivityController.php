@@ -24,6 +24,14 @@ class DailyActivityController extends Controller
             'stats'         => $this->service->getStats($request, $regionCodes),
             'filterOptions' => $this->service->getFilterOptions($regionCodes),
             'filters'       => $request->only(['filter_mode', 'filter_date', 'regions', 'pic_team', 'task_status', 'nop', 'search']),
+            // PIC Team di Assign harus pilih dari user beneran (Field Team /
+            // akses MobApp), bukan ngetik manual -- biar konsisten sama data
+            // yang ada di User Management.
+            'picUsers'      => DB::table('users')
+                ->where('can_access_mobapp', true)
+                ->where('is_active', true)
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'username']),
         ]);
     }
 
