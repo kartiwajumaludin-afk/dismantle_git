@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
 
 // Shell UI Approve: sidebar = 1 icon per MODUL (dari tabel `menus`), top bar =
@@ -13,11 +13,50 @@ import { usePage, router } from '@inertiajs/react';
 // (contoh: "fa-bell"), jadi classname-nya cuma `fas ${menu.icon}` —
 // JANGAN ditambah "fa-" lagi (itu bug yang bikin icon kosong kemarin).
 const LEFT_PANEL_WIDTH = 350;
+const GPS_PING_INTERVAL_MS = 2 * 60 * 1000; // tiap 2 menit
+
+// APK "remote URL wrapper" -- kode plugin native (GPS dkk) TIDAK dibundle
+// di website ini, tapi native Capacitor otomatis nyuntik object
+// `window.Capacitor.Plugins.Geolocation` ke halaman manapun yang kebuka
+// di dalam WebView-nya, termasuk halaman remote kayak situs kita. Jadi cek
+// keberadaan itu dulu -- kalau nggak ada (dibuka dari browser desktop
+// biasa), jangan ngapa-ngapain.
+function useGpsPing() {
+    useEffect(() => {
+        const cap = window.Capacitor;
+        if (!cap?.isNativePlatform?.() || !cap?.Plugins?.Geolocation) return;
+
+        const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+        const sendPing = async () => {
+            try {
+                const pos = await cap.Plugins.Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+                await fetch(route('tracking.ping'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf() },
+                    body: JSON.stringify({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                    }),
+                });
+            } catch (e) {
+                // Diam-diam gagal (izin GPS ditolak, di luar jadwal, dll) —
+                // jangan ganggu user, biarin coba lagi di interval berikutnya.
+            }
+        };
+
+        sendPing();
+        const t = setInterval(sendPing, GPS_PING_INTERVAL_MS);
+        return () => clearInterval(t);
+    }, []);
+}
 
 export default function AppLayout({ children, leftPanel, activeSubmenu }) {
     const { auth, menus = [] } = usePage().props;
     const [panelOpen, setPanelOpen] = useState(true);
     const [hoveredMenu, setHoveredMenu] = useState(null);
+
+    useGpsPing();
 
     const handleLogout = () => router.post(route('logout'));
 
