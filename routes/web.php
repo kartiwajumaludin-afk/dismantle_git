@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DailyActivity\DailyActivityController;
 use App\Http\Controllers\Import\ImportController;
+use App\Http\Controllers\ModeTracking\ModeTrackingController;
+use App\Http\Controllers\SiteMap\SiteMapController;
 use App\Http\Controllers\Tracker\TrackerController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -95,6 +97,28 @@ Route::middleware(['auth', 'active.user'])->group(function () {
 });
 
 // ══════════════════════════════════════════════════════════════════════
+// SITE MAP
+// ══════════════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::get('/site-map',           [SiteMapController::class, 'index'])->name('sitemap.index');
+    Route::post('/site-map/populate', [SiteMapController::class, 'populate'])->name('sitemap.populate');
+    Route::get('/site-map/data',      [SiteMapController::class, 'data'])->name('sitemap.data');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// MODE TRACKING — termasuk endpoint yang dipanggil APK (gpsPing dkk).
+// ══════════════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::get('/mode-tracking',                    [ModeTrackingController::class, 'index'])->name('sitemap.tracking');
+    Route::get('/mode-tracking/positions',           [ModeTrackingController::class, 'teamPositions'])->name('tracking.positions');
+    Route::get('/mode-tracking/planned-sites',       [ModeTrackingController::class, 'plannedSites'])->name('tracking.planned-sites');
+    Route::get('/mode-tracking/settings',            [ModeTrackingController::class, 'trackingSettings'])->name('tracking.settings');
+    Route::post('/mode-tracking/settings',           [ModeTrackingController::class, 'updateSchedule'])->name('tracking.settings.update');
+    // Endpoint APK -- kirim posisi GPS field team.
+    Route::post('/mode-tracking/ping',               [ModeTrackingController::class, 'gpsPing'])->name('tracking.ping');
+});
+
+// ══════════════════════════════════════════════════════════════════════
 // PLACEHOLDER — semua submodul yang belum digarap, biar pondasi navigasi
 // (sidebar Modul + tab Sub Modul) lengkap sejak awal, sesuai UI Approve.
 // Nanti satu-satu diganti jadi Controller sungguhan pas gilirannya, urutan
@@ -114,10 +138,6 @@ Route::middleware(['auth', 'active.user'])->group(function () {
             ]);
         };
     };
-
-    // -- Dismantle Asset Write-Off (sisanya) --
-    Route::get('/site-map',          $placeholder('Site Map', 'fa-map', 'site_map'))->name('sitemap.index');
-    Route::get('/site-map/tracking', $placeholder('Mode Tracking', 'fa-satellite-dish', 'mode_tracking'))->name('sitemap.tracking');
 
     // -- Dashboard --
     Route::get('/dashboard/analysis', $placeholder('Dashboard Analysis', 'fa-chart-pie', 'dash_analysis'))->name('dashboard.analysis');
