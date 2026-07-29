@@ -261,7 +261,11 @@ const S = {
     mainArea: { flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' },
     panelToggle: {
         position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-        zIndex: 100, width: '18px', height: '48px',
+        // z-index dinaikin di atas 700 -- panel internal Leaflet (tilePane,
+        // overlayPane, tooltipPane, popupPane) bisa sampai z-index 700 dan
+        // dulu NUTUPIN tombol ini di modul yang pakai peta (Site Map/Mode
+        // Tracking), bikin kelihatan kayak "nggak bisa di-collapse".
+        zIndex: 1200, width: '18px', height: '48px',
         background: '#2a3140', border: '1px solid #3a4255',
         borderRadius: '0 6px 6px 0', color: '#8b949e', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
