@@ -47,6 +47,24 @@ select:focus, input:focus {
 
 input::placeholder { color: #6e7681 !important; }
 
+/* ── Dropdown list bawaan <select>/<option> — browser render ini di luar
+   kendali inline style biasa (native OS popup), jadi HARUS pakai selector
+   ini biar background-nya nggak putih. Hover/highlight biru didukung
+   Chrome/Edge lewat :hover & :checked di dalam <option>. ── */
+select option {
+    background-color: #141821 !important;
+    color: #e6edf3 !important;
+}
+select option:hover,
+select option:focus,
+select option:checked {
+    background-color: #00b4d8 !important;
+    color: #ffffff !important;
+}
+select option:disabled {
+    color: #6e7681 !important;
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #141821; }
 ::-webkit-scrollbar-thumb { background: #00b4d8; border-radius: 4px; }
