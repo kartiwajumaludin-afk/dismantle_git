@@ -114,7 +114,7 @@ export default function AppLayout({ children, leftPanel, activeSubmenu }) {
 
                 {activeMenu && (
                     <div style={S.menuBar}>
-                        <div className="rgb-border" style={{ ...S.menuTitle, width: `${LEFT_PANEL_WIDTH}px` }}>
+                        <div style={{ ...S.menuTitle, width: `${LEFT_PANEL_WIDTH}px` }}>
                             <span>{activeMenu.label}</span>
                         </div>
                         <div style={S.submenuBar}>
@@ -244,7 +244,7 @@ const S = {
         flexShrink: 0, height: '100%',
         display: 'flex', alignItems: 'center', padding: '0 20px',
         fontSize: '.95rem', fontWeight: 700, color: '#e6edf3',
-        background: '#212631', borderRight: '3px solid',
+        background: '#212631', borderRight: '1px solid #2a3140',
     },
     submenuBar: {
         flex: 1, height: '100%', display: 'flex', gap: '4px',
